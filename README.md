@@ -1,9 +1,5 @@
 # MLH Fellowship LLM Project
 
-A barebones full-stack LLM chat application, built as a starting point for
-MLH fellows to extend. It intentionally does very little out of the box --
-see [`ISSUES.md`](./ISSUES.md) for the 30 issues that build it out.
-
 ## Stack
 
 - **Backend:** Python, FastAPI, SQLAlchemy, SQLite. Talks to an LLM
