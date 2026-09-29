@@ -41,6 +41,16 @@ cp .env.example .env   # then add your GEMINI_API_KEY (free tier: https://aistud
 uvicorn app.main:app --reload --port 8000
 ```
 
+After the backend has initialized the local database, load sample conversations
+for frontend development without making an LLM request:
+
+```bash
+cd backend
+python -m scripts.seed
+```
+
+The command is idempotent, so rerunning it does not duplicate the sample data.
+
 ### Frontend
 
 ```bash
