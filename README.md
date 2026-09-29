@@ -51,6 +51,15 @@ python -m scripts.seed
 
 The command is idempotent, so rerunning it does not duplicate the sample data.
 
+To apply a system instruction to every LLM request, set `SYSTEM_PROMPT` in
+`backend/.env`:
+
+```dotenv
+SYSTEM_PROMPT="Answer as a concise Solana development mentor."
+```
+
+Leave the setting empty to keep the provider's default behavior.
+
 ### Frontend
 
 ```bash

@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     llm_provider: str = "gemini"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
+    system_prompt: str | None = None
 
     # CORS - the Vite dev server default port
     frontend_origin: str = "http://localhost:5173"
