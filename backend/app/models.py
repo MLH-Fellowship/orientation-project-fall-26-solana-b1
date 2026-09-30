@@ -42,3 +42,7 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")
+
+class CentralError(Exception):
+    def __init__(self, name:str):
+        self.name = name
