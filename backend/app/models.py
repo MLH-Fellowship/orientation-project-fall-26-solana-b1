@@ -1,10 +1,11 @@
 """
 Minimal data model for a chat application.
 
+User          -> has many Conversations (optional ownership)
 Conversation  -> has many Messages
 Message       -> belongs to a Conversation, has a role (user/assistant)
 
-This is intentionally bare. Fellows will extend it with a User model,
+This is intentionally bare. Fellows will extend it with authentication,
 timestamps/soft-deletes, token usage tracking, etc. (see ISSUES.md).
 """
 import uuid
@@ -20,12 +21,25 @@ def _uuid() -> str:
     return str(uuid.uuid4())
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    email = Column(String, nullable=False, unique=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    conversations = relationship("Conversation", back_populates="user")
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(String, primary_key=True, default=_uuid)
     title = Column(String, default="New Conversation")
     created_at = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)
+
+    user = relationship("User", back_populates="conversations")
 
     messages = relationship(
         "Message", back_populates="conversation", cascade="all, delete-orphan"
