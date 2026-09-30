@@ -77,13 +77,28 @@ python -m uvicorn app.main:app --reload --port 8000
 
 ### Frontend
 
+The frontend requires Node.js 18 or newer. From the repository root,
+install the locked dependencies and start Vite with:
+
 ```bash
-cd frontend
-npm install
-npm run dev
+make frontend-install
+make frontend-run
 ```
 
-Then visit `http://localhost:5173`.
+Then visit `http://localhost:5173`. To verify that the production bundle
+builds successfully, run:
+
+```bash
+make frontend-build
+```
+
+The equivalent manual setup is:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
 
 ### Or run both at once
 
