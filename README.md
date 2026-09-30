@@ -33,12 +33,46 @@ scripts/dev.sh            # runs backend + frontend together
 
 ### Backend
 
+The pinned backend dependencies support Python 3.10 through 3.13. Python
+3.14 is not currently supported by the pinned Pydantic release.
+
+From the repository root, create the virtual environment, install the
+dependencies, and copy the environment template with:
+
+```bash
+make backend-install
+```
+
+If your default `python3` is newer than Python 3.13, select a supported
+interpreter explicitly. For example:
+
+```bash
+make backend-install PYTHON=python3.13
+```
+
+Add your Gemini API key to `backend/.env`, then start the API:
+
+```bash
+make backend-run
+```
+
+The API is available at `http://localhost:8000`; verify it with
+`http://localhost:8000/api/health`. Run the backend tests with:
+
+```bash
+make backend-test
+```
+
+The equivalent manual setup is:
+
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # then add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)
-uvicorn app.main:app --reload --port 8000
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+cp .env.example .env
+# Add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 ### Frontend
