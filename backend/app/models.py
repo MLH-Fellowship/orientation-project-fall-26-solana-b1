@@ -19,7 +19,6 @@ from app.database import Base
 def _uuid() -> str:
     return str(uuid.uuid4())
 
-
 class Conversation(Base):
     __tablename__ = "conversations"
 
@@ -43,6 +42,3 @@ class Message(Base):
 
     conversation = relationship("Conversation", back_populates="messages")
 
-class CentralError(Exception):
-    def __init__(self, name:str):
-        self.name = name
