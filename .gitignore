@@ -1,0 +1,5 @@
+backend/logs/*.log
+scripts/dev.sh
+frontend/node_modules
+*__pycache__*
+backend/app.db
