@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Environment & API Keys (DO NOT COMMIT)
+.env
+.env.local
+.env.*.local
+
+# Build Outputs & Cache
+dist/
+build/
+.DS_Store
+*.log
