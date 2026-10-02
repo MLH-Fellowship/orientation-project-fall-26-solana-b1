@@ -40,3 +40,31 @@ def test_send_message_uses_mocked_llm(client):
 def test_send_message_404(client):
     r = client.post("/api/conversations/nope/messages", json={"content": "hi"})
     assert r.status_code == 404
+
+
+MISSING_ID = "00000000-0000-4000-8000-000000000000"
+
+
+def test_rename_conversation(client):
+    c = make(client)
+    r = client.patch(f"/api/conversations/{c['id']}", json={"title": "  New name  "})
+    assert r.status_code == 200
+    assert r.json()["title"] == "New name"
+    assert client.get(f"/api/conversations/{c['id']}").json()["title"] == "New name"
+
+
+@pytest.mark.parametrize("title", ["", "   ", "x" * 201])
+def test_rename_validation(client, title):
+    c = make(client)
+    r = client.patch(f"/api/conversations/{c['id']}", json={"title": title})
+    assert r.status_code == 422
+
+
+def test_rename_404(client):
+    assert client.patch(f"/api/conversations/{MISSING_ID}", json={"title": "x"}).status_code == 404
+
+
+@pytest.mark.parametrize("bad_id", ["nope", "1' OR '1'='1", "not-a-uuid"])
+def test_rename_rejects_malformed_id(client, bad_id):
+    r = client.patch(f"/api/conversations/{bad_id}", json={"title": "x"})
+    assert r.status_code == 422

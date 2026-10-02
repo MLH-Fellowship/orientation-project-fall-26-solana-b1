@@ -5,7 +5,9 @@ This is the minimum needed for the UI to create a conversation, send a
 message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -15,11 +17,21 @@ from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
     ConversationOut,
+    ConversationUpdate,
     MessageCreate,
     MessageOut,
 )
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
+
+# Conversation ids are UUID4 strings (see models._uuid); reject anything else
+# with a 422 before it reaches the database.
+ConversationId = Annotated[
+    str,
+    Path(
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    ),
+]
 
 
 @router.post("", response_model=ConversationOut)
@@ -41,6 +53,21 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
     convo = db.get(Conversation, conversation_id)
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
+    return convo
+
+
+@router.patch("/{conversation_id}", response_model=ConversationOut)
+def rename_conversation(
+    conversation_id: ConversationId,
+    payload: ConversationUpdate,
+    db: Session = Depends(get_db),
+):
+    convo = db.get(Conversation, conversation_id)
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    convo.title = payload.title
+    db.commit()
+    db.refresh(convo)
     return convo
 
 
