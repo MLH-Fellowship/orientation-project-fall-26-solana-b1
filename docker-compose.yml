@@ -29,7 +29,7 @@ services:
       backend:
         condition: service_healthy
     environment:
-      VITE_API_PROXY_TARGET: http://backend:8000
+      BACKEND_URL: http://backend:8000
     ports:
       - "5173:5173"
     volumes:
