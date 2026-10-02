@@ -16,3 +16,11 @@ class LLMProvider(ABC):
         dicts, return the assistant's full text reply.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def generate_title(self, user_message: str, assistant_message: str) -> str:
+        """
+        Given the first user message and the assistant's reply, return a
+        short (3–6 word) conversation title.
+        """
+        raise NotImplementedError
