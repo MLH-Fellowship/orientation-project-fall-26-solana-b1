@@ -1,8 +1,16 @@
 """Pydantic request/response schemas."""
+from fastapi.responses import JSONResponse
 from datetime import datetime
 
 from pydantic import BaseModel
 
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+    
+class ErrorResponse(BaseModel):
+    error: ErrorDetail
 
 class MessageCreate(BaseModel):
     content: str
