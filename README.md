@@ -80,3 +80,10 @@ or Docker setup -- those are the fellowship issues.
 Pick an issue from `ISSUES.md`, open a branch, and submit a PR. Issues
 are labeled by area (`backend`, `frontend`, `database`, `llm`, `infra`)
 and difficulty (`good first issue`, `intermediate`, `advanced`).
+
+## Message validation
+
+Message content must be a string containing 1–10,000 characters after surrounding
+whitespace is removed. Interior spaces and line breaks are preserved. Invalid
+payloads return HTTP 422 with validation details, without saving a message or
+calling the LLM.
