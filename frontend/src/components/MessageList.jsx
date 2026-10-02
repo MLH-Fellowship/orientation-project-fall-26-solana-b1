@@ -1,13 +1,12 @@
 export default function MessageList({ messages, loading }) {
   return (
-    <div style={{ minHeight: 300, border: "1px solid #ddd", borderRadius: 8, padding: 16, marginBottom: 16 }}>
-      {messages.length === 0 && <p style={{ color: "#888" }}>Say hello to start the conversation.</p>}
+    <div className="messages">
       {messages.map((m, i) => (
-        <div key={i} style={{ marginBottom: 12 }}>
-          <strong>{m.role === "user" ? "You" : "Assistant"}:</strong> {m.content}
+        <div key={m.id ?? i} className={`message ${m.role}`}>
+          {m.content}
         </div>
       ))}
-      {loading && <p style={{ color: "#888" }}>Thinking...</p>}
+      {loading && <p className="hint">Thinking...</p>}
     </div>
   );
 }
