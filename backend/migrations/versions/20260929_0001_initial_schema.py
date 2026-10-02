@@ -26,7 +26,9 @@ def upgrade() -> None:
         sa.Column("role", sa.String(), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["conversation_id"], ["conversations.id"]),
+        sa.ForeignKeyConstraint(
+            ["conversation_id"], ["conversations.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
 
