@@ -27,6 +27,7 @@ frontend/
     components/          # MessageList, MessageInput
     api/client.js         # fetch wrapper for backend API
 scripts/dev.sh            # runs backend + frontend together
+docker-compose.yml        # runs both services in development containers
 ```
 
 ## Getting started
@@ -67,13 +68,34 @@ Then visit `http://localhost:5173`.
 ./scripts/dev.sh
 ```
 
+### Run with Docker
+
+Docker Compose builds both development containers, keeps the SQLite database in
+a named volume, and configures the Vite proxy to reach the backend container.
+
+```bash
+GEMINI_API_KEY=your-key docker compose up --build
+```
+
+Then visit `http://localhost:5173`. The backend API is also available at
+`http://localhost:8000`. Code changes under `backend/` and `frontend/` are
+mounted into their containers for development reloads. The API key is optional
+for the health and conversation endpoints, but generating an LLM response
+requires it.
+
+Stop both services with:
+
+```bash
+docker compose down
+```
+
 ## What's here vs. what's not
 
 This scaffold gives you: a working conversation + message data model, one
 endpoint to send a message and get an LLM reply, and a minimal React UI
 that can hold a single conversation. It deliberately has **no**
 authentication, streaming, pagination, multi-conversation UI, migrations,
-or Docker setup -- those are the fellowship issues.
+or production deployment configuration -- those are the fellowship issues.
 
 ## Contributing
 
