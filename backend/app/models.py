@@ -28,9 +28,7 @@ class Conversation(Base):
     title = Column(String, default="New Conversation")
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    messages = relationship(
-        "Message", back_populates="conversation", cascade="all, delete-orphan"
-    )
+    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
 
 
 class Message(Base):

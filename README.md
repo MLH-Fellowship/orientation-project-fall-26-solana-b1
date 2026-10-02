@@ -29,6 +29,28 @@ frontend/
 scripts/dev.sh            # runs backend + frontend together
 ```
 
+## Continuous integration
+
+Pull requests and pushes to `main` run two CI jobs: backend Ruff linting, Black
+format checking, and pytest; frontend ESLint checks and a production build.
+CI uses Python 3.12 and Node.js 22 and does not require an LLM API key.
+
+Run the same checks locally from the repository root:
+
+```bash
+backend/.venv/bin/python -m pip install -r backend/requirements-lint.txt
+backend/.venv/bin/python -m ruff check backend
+backend/.venv/bin/python -m black --check backend
+(cd backend && DATABASE_URL=sqlite:// .venv/bin/python -m pytest -q)
+npm --prefix frontend ci
+npm --prefix frontend run lint
+npm --prefix frontend run build
+```
+
+To fix Python formatting, run `backend/.venv/bin/python -m black backend`.
+Ruff and ESLint detect common code errors; these checks do not add a separate
+static type checker to this Python/JavaScript project.
+
 ## Getting started
 
 ### Backend
@@ -80,25 +102,3 @@ or Docker setup -- those are the fellowship issues.
 Pick an issue from `ISSUES.md`, open a branch, and submit a PR. Issues
 are labeled by area (`backend`, `frontend`, `database`, `llm`, `infra`)
 and difficulty (`good first issue`, `intermediate`, `advanced`).
-
-## Continuous integration
-
-Pull requests and pushes to `main` run two CI jobs: backend Ruff linting, Black
-format checking, and pytest; frontend ESLint checks and a production build.
-CI uses Python 3.12 and Node.js 22 and does not require an LLM API key.
-
-Run the same checks locally from the repository root:
-
-```bash
-backend/.venv/bin/python -m pip install -r backend/requirements-lint.txt
-backend/.venv/bin/python -m ruff check backend
-backend/.venv/bin/python -m black --check backend
-(cd backend && DATABASE_URL=sqlite:// .venv/bin/python -m pytest -q)
-npm --prefix frontend ci
-npm --prefix frontend run lint
-npm --prefix frontend run build
-```
-
-To fix Python formatting, run `backend/.venv/bin/python -m black backend`.
-Ruff and ESLint detect common code errors; these checks do not add a separate
-static type checker to this Python/JavaScript project.
