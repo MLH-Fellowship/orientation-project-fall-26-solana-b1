@@ -36,9 +36,12 @@ export default function App() {
         open={sidebarOpen}
         onOpenChange={setSidebarOpen}
         conversations={chat.conversations}
+        listState={chat.listState}
+        onRetryList={chat.reloadConversations}
         activeId={chat.activeId}
         pending={chat.pending}
         unread={chat.unread}
+        failed={chat.failed}
         onOpen={openConversation}
         onNew={startNewChat}
       />
@@ -49,6 +52,7 @@ export default function App() {
         inputRef={inputRef}
         sidebarOpen={sidebarOpen}
         onOpenSidebar={() => setSidebarOpen(true)}
+        onRetryLoad={() => chat.openConversation(chat.activeId)}
       />
     </div>
   );
