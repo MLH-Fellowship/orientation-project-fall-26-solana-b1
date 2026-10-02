@@ -5,7 +5,6 @@ Loads settings from environment variables / a .env file. Add new
 settings here as the project grows (e.g. rate limit thresholds,
 alternate LLM providers, auth secrets).
 """
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +17,7 @@ class Settings(BaseSettings):
     llm_provider: str = "gemini"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.8-flash"
-    system_prompt: str | None = None
+    system_prompt: str = ""
 
     # CORS - the Vite dev server default port
     frontend_origin: str = "http://localhost:5173"
