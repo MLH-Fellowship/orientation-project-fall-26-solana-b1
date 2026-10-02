@@ -3,7 +3,7 @@
 from sqlalchemy import inspect
 
 from app.database import engine
-from app.models import User
+from app.models import Conversation, User
 
 
 def upgrade(bind):
@@ -20,6 +20,8 @@ def upgrade(bind):
             connection.exec_driver_sql(
                 "ALTER TABLE conversations ADD COLUMN user_id VARCHAR REFERENCES users(id)"
             )
+        for index in Conversation.__table__.indexes:
+            index.create(connection, checkfirst=True)
 
 
 if __name__ == "__main__":

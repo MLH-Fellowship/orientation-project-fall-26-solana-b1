@@ -22,6 +22,10 @@ def engine():
 
 def test_users_and_optional_ownership(engine):
     Base.metadata.create_all(engine)
+    assert any(
+        index["column_names"] == ["user_id"]
+        for index in inspect(engine).get_indexes("conversations")
+    )
     with Session(engine) as session:
         user = User(email="alex@example.com")
         owned = Conversation(user=user)
@@ -106,3 +110,7 @@ def test_upgrade_preserves_data_and_can_be_repeated(engine):
         session.rollback()
     foreign_keys = inspect(engine).get_foreign_keys("conversations")
     assert any(fk["constrained_columns"] == ["user_id"] and fk["referred_table"] == "users" for fk in foreign_keys)
+    assert any(
+        index["column_names"] == ["user_id"]
+        for index in inspect(engine).get_indexes("conversations")
+    )

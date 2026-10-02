@@ -37,7 +37,7 @@ class Conversation(Base):
     id = Column(String, primary_key=True, default=_uuid)
     title = Column(String, default="New Conversation")
     created_at = Column(DateTime, default=datetime.utcnow)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)
 
     user = relationship("User", back_populates="conversations")
 
