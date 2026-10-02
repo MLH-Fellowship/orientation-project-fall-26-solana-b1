@@ -1,13 +1,46 @@
-export default function MessageList({ messages, loading }) {
+import { CircleAlert, RotateCw } from "lucide-react";
+
+export default function MessageList({ messages, loading, opening, failedText, onRetry }) {
+  if (opening) {
+    return (
+      <div className="messages" aria-busy="true" aria-label="Loading chat">
+        <span className="skeleton bubble user" />
+        <span className="skeleton line" style={{ width: "92%" }} />
+        <span className="skeleton line" style={{ width: "78%" }} />
+        <span className="skeleton line" style={{ width: "54%" }} />
+      </div>
+    );
+  }
+
   return (
-    <div style={{ minHeight: 300, border: "1px solid #ddd", borderRadius: 8, padding: 16, marginBottom: 16 }}>
-      {messages.length === 0 && <p style={{ color: "#888" }}>Say hello to start the conversation.</p>}
+    <div className="messages">
       {messages.map((m, i) => (
-        <div key={i} style={{ marginBottom: 12 }}>
-          <strong>{m.role === "user" ? "You" : "Assistant"}:</strong> {m.content}
+        <div key={m.id ?? i} className={`message ${m.role}`}>
+          {m.content}
         </div>
       ))}
-      {loading && <p style={{ color: "#888" }}>Thinking...</p>}
+
+      {failedText && (
+        <div className="failed" role="alert">
+          <div className="message user">{failedText}</div>
+          <p className="failed-note">
+            <CircleAlert size={14} />
+            Not sent
+            <button className="text-button" onClick={onRetry}>
+              <RotateCw size={13} />
+              Retry
+            </button>
+          </p>
+        </div>
+      )}
+
+      {loading && (
+        <div className="typing" role="status" aria-label="Thinking">
+          <span />
+          <span />
+          <span />
+        </div>
+      )}
     </div>
   );
 }
