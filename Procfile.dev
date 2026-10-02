@@ -1,0 +1,2 @@
+backend: cd backend && exec "$BACKEND_PYTHON" -m uvicorn app.main:app --reload --port "${BACKEND_PORT:-8000}"
+frontend: cd frontend && exec npm run dev -- --host 127.0.0.1 --port "${FRONTEND_PORT:-5173}" --strictPort
