@@ -69,6 +69,7 @@ The equivalent manual setup is:
 cd backend
 python3.13 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 cp .env.example .env
 # Add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)

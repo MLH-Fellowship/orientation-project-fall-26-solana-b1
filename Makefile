@@ -2,7 +2,7 @@ PYTHON ?= python3
 
 BACKEND_DIR := backend
 BACKEND_VENV := $(BACKEND_DIR)/.venv
-BACKEND_PYTHON := $(BACKEND_VENV)/bin/python
+BACKEND_PYTHON := $(abspath $(BACKEND_VENV)/bin/python)
 FRONTEND_DIR := frontend
 
 .PHONY: backend-install backend-run backend-test check-backend-python frontend-install frontend-run frontend-build
@@ -12,16 +12,17 @@ check-backend-python:
 
 backend-install: check-backend-python
 	$(PYTHON) -m venv $(BACKEND_VENV)
+	$(BACKEND_PYTHON) -m pip install --upgrade pip
 	$(BACKEND_PYTHON) -m pip install -r $(BACKEND_DIR)/requirements.txt
 	@test -f $(BACKEND_DIR)/.env || cp $(BACKEND_DIR)/.env.example $(BACKEND_DIR)/.env
 
 backend-run:
 	@test -x $(BACKEND_PYTHON) || (echo "Run 'make backend-install' first." && exit 1)
-	cd $(BACKEND_DIR) && .venv/bin/python -m uvicorn app.main:app --reload --port 8000
+	cd $(BACKEND_DIR) && $(BACKEND_PYTHON) -m uvicorn app.main:app --reload --port 8000
 
 backend-test:
 	@test -x $(BACKEND_PYTHON) || (echo "Run 'make backend-install' first." && exit 1)
-	cd $(BACKEND_DIR) && .venv/bin/python -m pytest tests -q
+	cd $(BACKEND_DIR) && $(BACKEND_PYTHON) -m pytest tests -q
 
 frontend-install:
 	cd $(FRONTEND_DIR) && npm ci
