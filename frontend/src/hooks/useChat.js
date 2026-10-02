@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
 import { createConversation, getConversation, listConversations, sendMessage } from "../api/client.js";
-import { without } from "../lib/collections.js";
+
+function without(set, item) {
+  const next = new Set(set);
+  next.delete(item);
+  return next;
+}
 
 export default function useChat() {
   const [conversations, setConversations] = useState([]);
@@ -39,8 +44,11 @@ export default function useChat() {
         const convo = await createConversation(text.slice(0, 60));
         setConversations((cs) => [{ ...convo, fresh: true }, ...cs]);
         setPending((s) => without(s, "new").add(convo.id));
-        key = activeRef.current = convo.id;
-        setActiveId(key);
+        key = convo.id;
+        if (activeRef.current === null) {
+          activeRef.current = key;
+          setActiveId(key);
+        }
       }
       const reply = await sendMessage(key, text);
       if (activeRef.current === key) setMessages((prev) => [...prev, reply]);
