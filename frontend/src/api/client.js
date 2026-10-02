@@ -3,7 +3,7 @@ const BASE = "/api";
 async function request(path, options) {
   const res = await fetch(`${BASE}${path}`, options);
   if (!res.ok) throw new Error(`${options?.method ?? "GET"} ${path} failed with ${res.status}`);
-  return res.json();
+  return res.status === 204 ? null : res.json();
 }
 
 function post(path, body) {
