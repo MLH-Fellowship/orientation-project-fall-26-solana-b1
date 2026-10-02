@@ -80,3 +80,22 @@ or Docker setup -- those are the fellowship issues.
 Pick an issue from `ISSUES.md`, open a branch, and submit a PR. Issues
 are labeled by area (`backend`, `frontend`, `database`, `llm`, `infra`)
 and difficulty (`good first issue`, `intermediate`, `advanced`).
+
+## API
+
+With the backend running, open [interactive API documentation](http://localhost:8000/docs)
+to inspect request/response schemas and try each endpoint. The raw OpenAPI schema is
+available at `http://localhost:8000/openapi.json`.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/health` | Check that the application responds |
+| POST | `/api/conversations` | Create a conversation, e.g. `{"title": "Learning FastAPI"}` |
+| GET | `/api/conversations` | List conversations, newest first |
+| GET | `/api/conversations/{id}` | Read a conversation and its messages |
+| POST | `/api/conversations/{id}/messages` | Send `{"content": "Hello!"}` and receive the saved assistant reply |
+
+Missing conversation IDs return HTTP 404; invalid request bodies return HTTP 422.
+Sending messages requires an LLM API key. Health checks and creating, listing,
+or reading conversations do not. The send endpoint returns the saved assistant
+message; read the conversation again to retrieve the complete message history.
