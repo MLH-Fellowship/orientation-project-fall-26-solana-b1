@@ -7,6 +7,7 @@ Message       -> belongs to a Conversation, has a role (user/assistant)
 This is intentionally bare. Fellows will extend it with a User model,
 timestamps/soft-deletes, token usage tracking, etc. (see ISSUES.md).
 """
+
 import uuid
 from datetime import datetime
 
@@ -27,9 +28,7 @@ class Conversation(Base):
     title = Column(String, default="New Conversation")
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    messages = relationship(
-        "Message", back_populates="conversation", cascade="all, delete-orphan"
-    )
+    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
 
 
 class Message(Base):
