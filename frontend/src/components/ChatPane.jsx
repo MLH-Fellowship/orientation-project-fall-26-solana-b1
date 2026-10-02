@@ -18,7 +18,7 @@ function LoadError({ onRetry }) {
 }
 
 export default function ChatPane({ chat, greetingKey, inputRef, sidebarOpen, onOpenSidebar, onRetryLoad }) {
-  const empty = chat.messages.length === 0 && !chat.sending && !chat.failedText && !chat.opening;
+  const empty = chat.messages.length === 0 && !chat.sending && chat.failedTexts.length === 0 && !chat.opening;
 
   return (
     <main className={"chat" + (empty ? " is-empty" : "")}>
@@ -39,7 +39,7 @@ export default function ChatPane({ chat, greetingKey, inputRef, sidebarOpen, onO
           messages={chat.messages}
           loading={chat.sending}
           opening={chat.opening}
-          failedText={chat.failedText}
+          failedTexts={chat.failedTexts}
           onRetry={chat.retry}
         />
       )}

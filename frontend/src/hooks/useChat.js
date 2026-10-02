@@ -64,7 +64,6 @@ export default function useChat() {
 
   async function send(text) {
     let key = activeId ?? "new";
-    setFailed((f) => omit(f, key));
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setPending((s) => new Set(s).add(key));
     try {
@@ -72,6 +71,7 @@ export default function useChat() {
         const convo = await createConversation(text.slice(0, 60));
         setConversations((cs) => [{ ...convo, fresh: true }, ...cs]);
         setPending((s) => without(s, "new").add(convo.id));
+        setFailed((f) => (f.new ? { ...omit(f, "new"), [convo.id]: f.new } : f));
         key = convo.id;
         if (activeRef.current === null) {
           activeRef.current = key;
@@ -83,13 +83,22 @@ export default function useChat() {
       else setUnread((s) => new Set(s).add(key));
     } catch {
       if ((activeRef.current ?? "new") === key) setMessages((prev) => prev.slice(0, -1));
-      setFailed((f) => ({ ...f, [key]: text }));
+      setFailed((f) => ({ ...f, [key]: [...(f[key] ?? []), text] }));
     } finally {
       setPending((s) => without(s, key));
     }
   }
 
   const key = activeId ?? "new";
+
+  function retry(index) {
+    const text = failed[key][index];
+    setFailed((f) => {
+      const rest = f[key].filter((_, i) => i !== index);
+      return rest.length ? { ...f, [key]: rest } : omit(f, key);
+    });
+    send(text);
+  }
 
   return {
     conversations,
@@ -103,10 +112,10 @@ export default function useChat() {
     sending: pending.has(key),
     opening: activeId !== null && opening === activeId,
     loadFailed: activeId !== null && loadFailed === activeId,
-    failedText: failed[key],
+    failedTexts: failed[key] ?? [],
     openConversation,
     startNewChat,
     send,
-    retry: () => send(failed[key]),
+    retry,
   };
 }

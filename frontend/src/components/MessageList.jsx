@@ -1,6 +1,6 @@
 import { CircleAlert, RotateCw } from "lucide-react";
 
-export default function MessageList({ messages, loading, opening, failedText, onRetry }) {
+export default function MessageList({ messages, loading, opening, failedTexts, onRetry }) {
   if (opening) {
     return (
       <div className="messages" aria-busy="true" aria-label="Loading chat">
@@ -20,19 +20,19 @@ export default function MessageList({ messages, loading, opening, failedText, on
         </div>
       ))}
 
-      {failedText && (
-        <div className="failed" role="alert">
-          <div className="message user">{failedText}</div>
+      {failedTexts.map((text, i) => (
+        <div key={i} className="failed" role="alert">
+          <div className="message user">{text}</div>
           <p className="failed-note">
             <CircleAlert size={14} />
             Not sent
-            <button className="text-button" onClick={onRetry}>
+            <button className="text-button" onClick={() => onRetry(i)}>
               <RotateCw size={13} />
               Retry
             </button>
           </p>
         </div>
-      )}
+      ))}
 
       {loading && (
         <div className="typing" role="status" aria-label="Thinking">
