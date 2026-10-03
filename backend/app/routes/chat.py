@@ -71,6 +71,15 @@ def rename_conversation(
     return convo
 
 
+@router.delete("/{conversation_id}", status_code=204)
+def delete_conversation(conversation_id: ConversationId, db: Session = Depends(get_db)):
+    convo = db.get(Conversation, conversation_id)
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    db.delete(convo)  # cascades to messages via the ORM relationship
+    db.commit()
+
+
 @router.post("/{conversation_id}/messages", response_model=MessageOut)
 def send_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db)):
     convo = db.get(Conversation, conversation_id)
