@@ -42,6 +42,15 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
+To apply a system instruction to every LLM request, set `SYSTEM_PROMPT` in
+`backend/.env`:
+
+```dotenv
+SYSTEM_PROMPT="Answer as a concise Solana development mentor."
+```
+
+Leave the setting empty to keep the provider's default behavior.
+
 After the backend has initialized the local database, load sample conversations
 for frontend development without making an LLM request:
 
