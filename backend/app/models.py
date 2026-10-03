@@ -5,8 +5,7 @@ User          -> has many Conversations (optional ownership)
 Conversation  -> has many Messages
 Message       -> belongs to a Conversation, has a role (user/assistant)
 
-This is intentionally bare. Fellows will extend it with authentication,
-timestamps/soft-deletes, token usage tracking, etc. (see ISSUES.md).
+Conversation ownership is optional, allowing anonymous chats.
 """
 
 import uuid

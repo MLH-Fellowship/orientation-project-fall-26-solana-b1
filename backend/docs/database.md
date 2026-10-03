@@ -1,4 +1,4 @@
-# User model (#6)
+# User model
 
 `users` contains a UUID string primary key (`id`), required unique `email`,
 and `created_at`, using the existing Python UTC timestamp default convention.
@@ -10,22 +10,30 @@ requests continue to create unowned conversations. SQLAlchemy exposes ownership
 through `Conversation.user` and `User.conversations`. No password or auth
 endpoints are included.
 
-## Existing SQLite databases
+## Schema migrations
 
-Fresh databases receive the schema through normal application startup.
-`create_all()` does not alter existing tables. Stop the backend and back up the
-SQLite database before upgrading. From `backend/`, with backend dependencies
+Fresh and existing databases use Alembic; application startup does not create
+tables. Stop the backend and back up the database before upgrading.
+From `backend/`, with backend dependencies
 installed and the usual `DATABASE_URL` or `.env` configuration, run:
 
 ```bash
-python -m scripts.upgrade_user_model
+alembic upgrade head
 ```
 
-The upgrade creates `users` and adds nullable `conversations.user_id`, preserving
-conversation and message rows. It can be rerun. It targets the original scaffold
-schema; it does not repair a pre-existing, incompatible `users` table. For rollback,
-restore the pre-upgrade backup before restarting the old application. Other
-database engines require a corresponding migration.
+The user-model revision follows `20260929_0001`, creates `users`, and adds
+nullable `conversations.user_id` with its foreign key and index. Existing
+conversation and message rows are preserved. Alembic tracks applied revisions,
+so rerunning the command does not apply them again.
+
+For a database created by the original scaffold without Alembic history, first
+verify that it matches the initial conversations/messages schema, then run
+`alembic stamp 20260929_0001` before upgrading. Do not stamp a fresh database or
+one already modified by the retired manual upgrade script.
+
+To revert the user-model revision, run `alembic downgrade 20260929_0001`.
+This removes users and ownership data while retaining conversations and messages.
+SQLite table changes use Alembic batch operations.
 
 ## Deletion and enforcement
 
@@ -36,5 +44,6 @@ conversation-to-message ORM `all, delete-orphan` cascade is unchanged.
 
 SQLite foreign-key enforcement is not enabled by the current application engine;
 declaring a foreign key alone does not enable it. Tests explicitly enable it when
-checking referential integrity. Database-wide enforcement and the detailed
-ORM/direct-SQL deletion review, along with both ownership indexes, remain for #10.
+checking referential integrity. With enforcement enabled, direct SQL deletes must
+respect the foreign key; ORM deletion behavior does not apply to writes outside
+SQLAlchemy sessions.
