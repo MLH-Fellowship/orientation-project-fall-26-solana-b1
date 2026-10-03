@@ -18,6 +18,7 @@ from app.schemas import (
     MessageCreate,
     MessageOut,
 )
+from app.titles import DEFAULT_TITLE, resolve_title
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
@@ -50,10 +51,12 @@ def send_message(conversation_id: str, payload: MessageCreate, db: Session = Dep
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+    is_first_exchange = len(convo.messages) == 0
+
     user_msg = Message(conversation_id=conversation_id, role="user", content=payload.content)
     db.add(user_msg)
     db.commit()
-
+    db.refresh(convo)
     history = [{"role": m.role, "content": m.content} for m in convo.messages]
 
     llm = get_llm_provider()
@@ -62,5 +65,14 @@ def send_message(conversation_id: str, payload: MessageCreate, db: Session = Dep
     assistant_msg = Message(conversation_id=conversation_id, role="assistant", content=reply_text)
     db.add(assistant_msg)
     db.commit()
+
+    if is_first_exchange and convo.title == DEFAULT_TITLE:
+        convo.title = resolve_title(
+            payload.content,
+            reply_text,
+            lambda: llm.generate_title(payload.content, reply_text),
+        )
+        db.commit()
+
     db.refresh(assistant_msg)
     return assistant_msg
