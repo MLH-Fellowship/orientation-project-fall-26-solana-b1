@@ -8,6 +8,7 @@ Message       -> belongs to a Conversation, has a role (user/assistant)
 This is intentionally bare. Fellows will extend it with authentication,
 timestamps/soft-deletes, token usage tracking, etc. (see ISSUES.md).
 """
+
 import uuid
 from datetime import datetime
 
@@ -50,7 +51,9 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(String, primary_key=True, default=_uuid)
-    conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False)
+    conversation_id = Column(
+        String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+    )
     role = Column(String, nullable=False)  # "user" | "assistant"
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
