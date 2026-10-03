@@ -87,9 +87,40 @@ Then visit `http://localhost:5173`.
 
 ### Or run both at once
 
+One-time setup from the repository root (Python 3.10–3.13 and Node.js required):
+
+```bash
+python3 -m venv backend/.venv
+backend/.venv/bin/python -m pip install --upgrade pip
+backend/.venv/bin/python -m pip install --prefer-binary -r backend/requirements-dev.txt
+npm --prefix frontend install
+```
+
+Put `GEMINI_API_KEY=your_key_here` in `backend/.env` to enable AI replies.
+Then start both servers with:
+
 ```bash
 ./scripts/dev.sh
 ```
+
+Honcho prefixes output with `backend` or `frontend`. Press Ctrl+C once to stop
+both servers and their child processes. If either server exits, Honcho stops the
+other too. A port already in use causes startup to fail instead of silently
+moving the frontend to a different port.
+
+The script uses `backend/.venv/bin/python` without requiring activation and can
+be invoked by path from any directory. Set `BACKEND_PYTHON` to an absolute Python
+executable path if your environment lives elsewhere.
+
+By default, open `http://localhost:5173`; the API runs on port 8000. To run another
+instance without stopping one already running:
+
+```bash
+BACKEND_PORT=8001 FRONTEND_PORT=5174 ./scripts/dev.sh
+```
+
+The frontend proxy follows `BACKEND_PORT`. If you call the backend directly from
+a different frontend origin, also set `FRONTEND_ORIGIN` to that origin.
 
 ## What's here vs. what's not
 
