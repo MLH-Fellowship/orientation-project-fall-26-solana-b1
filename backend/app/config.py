@@ -5,6 +5,8 @@ Loads settings from environment variables / a .env file. Add new
 settings here as the project grows (e.g. rate limit thresholds,
 alternate LLM providers, auth secrets).
 """
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +24,13 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("DATABASE_URL must not be empty")
+        return value
 
 
 settings = Settings()

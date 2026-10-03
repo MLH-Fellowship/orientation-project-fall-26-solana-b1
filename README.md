@@ -38,6 +38,7 @@ cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # then add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)
+alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -50,6 +51,20 @@ python -m scripts.seed
 ```
 
 The command is idempotent, so rerunning it does not duplicate the sample data.
+
+Database schema changes are managed with Alembic. Run migration commands from
+the `backend` directory:
+
+```bash
+# Apply every pending migration
+alembic upgrade head
+
+# Create a migration after changing the SQLAlchemy models
+alembic revision --autogenerate -m "describe the schema change"
+
+# Revert the latest migration
+alembic downgrade -1
+```
 
 ### Frontend
 
