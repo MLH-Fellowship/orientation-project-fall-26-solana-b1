@@ -5,9 +5,9 @@ This is the minimum needed for the UI to create a conversation, send a
 message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
-from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -23,15 +23,6 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
-
-# Conversation ids are UUID4 strings (see models._uuid); reject anything else
-# with a 422 before it reaches the database.
-ConversationId = Annotated[
-    str,
-    Path(
-        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-    ),
-]
 
 
 @router.post("", response_model=ConversationOut)
@@ -58,11 +49,11 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
 
 @router.patch("/{conversation_id}", response_model=ConversationOut)
 def rename_conversation(
-    conversation_id: ConversationId,
+    conversation_id: UUID,
     payload: ConversationUpdate,
     db: Session = Depends(get_db),
 ):
-    convo = db.get(Conversation, conversation_id)
+    convo = db.get(Conversation, str(conversation_id))
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
     convo.title = payload.title
@@ -72,8 +63,8 @@ def rename_conversation(
 
 
 @router.delete("/{conversation_id}", status_code=204)
-def delete_conversation(conversation_id: ConversationId, db: Session = Depends(get_db)):
-    convo = db.get(Conversation, conversation_id)
+def delete_conversation(conversation_id: UUID, db: Session = Depends(get_db)):
+    convo = db.get(Conversation, str(conversation_id))
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
     db.delete(convo)  # cascades to messages via the ORM relationship

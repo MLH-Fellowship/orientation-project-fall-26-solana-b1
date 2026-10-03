@@ -1,11 +1,15 @@
 """Pydantic request/response schemas."""
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import BaseModel, StringConstraints
 
 
 class MessageCreate(BaseModel):
-    content: str
+    content: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=10000)
+    ]
 
 
 class MessageOut(BaseModel):
@@ -23,9 +27,7 @@ class ConversationCreate(BaseModel):
 
 
 class ConversationUpdate(BaseModel):
-    title: str = Field(min_length=1, max_length=200)
-
-    model_config = {"str_strip_whitespace": True}
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 
 
 class ConversationOut(BaseModel):

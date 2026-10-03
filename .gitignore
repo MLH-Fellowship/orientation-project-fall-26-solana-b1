@@ -1,5 +1,6 @@
-.venv/
 __pycache__/
-*.db
+*.py[cod]
+.venv/
 .env
+*.db
 .codegraph/
