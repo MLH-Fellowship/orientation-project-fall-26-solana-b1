@@ -93,6 +93,7 @@ One-time setup from the repository root (Python 3.10–3.13 and Node.js required
 python3 -m venv backend/.venv
 backend/.venv/bin/python -m pip install --upgrade pip
 backend/.venv/bin/python -m pip install --prefer-binary -r backend/requirements-dev.txt
+(cd backend && .venv/bin/python -m alembic upgrade head)
 npm --prefix frontend install
 ```
 
@@ -119,7 +120,9 @@ instance without stopping one already running:
 BACKEND_PORT=8001 FRONTEND_PORT=5174 ./scripts/dev.sh
 ```
 
-The frontend proxy follows `BACKEND_PORT`. If you call the backend directly from
+The frontend proxy follows `BACKEND_PORT`. Set `BACKEND_URL` to override the
+full proxy target (for example, `http://backend:8000` inside Docker); it takes
+precedence over `BACKEND_PORT`. If you call the backend directly from
 a different frontend origin, also set `FRONTEND_ORIGIN` to that origin.
 
 ## What's here vs. what's not

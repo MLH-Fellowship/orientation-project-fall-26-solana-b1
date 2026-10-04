@@ -24,4 +24,9 @@ if [[ ! -d frontend/node_modules ]]; then
   exit 1
 fi
 
+if [[ ! -f Procfile.dev ]]; then
+  echo "Procfile.dev is missing from the project root." >&2
+  exit 1
+fi
+
 exec "$BACKEND_PYTHON" -m honcho -f Procfile.dev start
