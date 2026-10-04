@@ -1,19 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import {
-  createConversation,
-  getConversation,
-  sendMessage,
-} from "./api/client.js";
-import MessageInput from "./components/MessageInput.jsx";
-import MessageList from "./components/MessageList.jsx";
+import ChatPane from "./components/ChatPane.jsx";
+import Sidebar from "./components/sidebar/Sidebar.jsx";
+import useChat from "./hooks/useChat.js";
+import useShortcut from "./hooks/useShortcut.js";
+import useSidebar, { isNarrow } from "./hooks/useSidebar.js";
 
-// Barebones single-conversation UI. There's no sidebar, no conversation
-// switching, no streaming yet -- those are fellow issues (see ISSUES.md).
+import { Moon, Sun } from "lucide-react";
+
 export default function App() {
-  const [conversationId, setConversationId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const chat = useChat();
+  const [sidebarOpen, setSidebarOpen] = useSidebar();
+  const [newChats, setNewChats] = useState(0);
+  const inputRef = useRef(null);
 
   // --- Theme State (Persisted in localStorage) ---
   const [theme, setTheme] = useState(() => {
@@ -37,39 +36,50 @@ export default function App() {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
-  useEffect(() => {
-    createConversation("New Conversation").then((c) => setConversationId(c.id));
-  }, []);
+  useEffect(() => inputRef.current?.focus(), [newChats]);
+  useShortcut("mod+shift+o", startNewChat);
 
-  async function handleSend(text) {
-    if (!conversationId) return;
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
-    setLoading(true);
-    await sendMessage(conversationId, text);
-    const full = await getConversation(conversationId);
-    setMessages(full.messages);
-    setLoading(false);
+  function closeSidebarOnPhone() {
+    if (isNarrow()) setSidebarOpen(false);
+  }
+
+  function openConversation(id) {
+    closeSidebarOnPhone();
+    chat.openConversation(id);
+  }
+
+  function startNewChat() {
+    closeSidebarOnPhone();
+    chat.startNewChat();
+    setNewChats((n) => n + 1);
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
-      <div
-        style={{
-          maxWidth: 700,
-          margin: "0 auto",
-          padding: 24,
-          fontFamily: "sans-serif",
-        }}
-      >
-        <button
-          onClick={toggleTheme}
-          className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        >
-          {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
-        </button>
-        <h1>MLH LLM Fellowship Project</h1>
-        <MessageList messages={messages} loading={loading} />
-        <MessageInput onSend={handleSend} disabled={loading} />
+    <div className="h-full bg-[var(--chrome)] text-[var(--ink)] transition-colors duration-200">
+      {" "}
+      <div className="app">
+        <Sidebar
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+          conversations={chat.conversations}
+          activeId={chat.activeId}
+          pending={chat.pending}
+          unread={chat.unread}
+          onOpen={openConversation}
+          onNew={startNewChat}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+        {sidebarOpen && (
+          <div className="scrim" onClick={() => setSidebarOpen(false)} />
+        )}
+        <ChatPane
+          chat={chat}
+          greetingKey={newChats}
+          inputRef={inputRef}
+          sidebarOpen={sidebarOpen}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
       </div>
     </div>
   );
