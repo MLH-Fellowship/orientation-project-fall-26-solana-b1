@@ -35,7 +35,9 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(String, primary_key=True, default=_uuid)
-    conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False)
+    conversation_id = Column(
+        String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+    )
     role = Column(String, nullable=False)  # "user" | "assistant"
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

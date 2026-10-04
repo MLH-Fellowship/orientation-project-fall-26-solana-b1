@@ -9,10 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.database import Base, engine
 from app.routes import chat, health
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.app_name)
 

@@ -31,7 +31,7 @@ scripts/dev.sh            # runs backend + frontend together
 
 ## Continuous integration
 
-Pull requests and pushes to `main` run two CI jobs: backend Ruff linting, Black
+Pull requests and pushes to `main` run two CI jobs: backend Ruff linting, Ruff
 format checking, and pytest; frontend ESLint checks and a production build.
 CI uses Python 3.12 and Node.js 22 and does not require an LLM API key.
 
@@ -40,16 +40,14 @@ Run the same checks locally from the repository root:
 ```bash
 backend/.venv/bin/python -m pip install -r backend/requirements-lint.txt
 backend/.venv/bin/python -m ruff check backend
-backend/.venv/bin/python -m black --check backend
+backend/.venv/bin/python -m ruff format --check backend
 (cd backend && DATABASE_URL=sqlite:// .venv/bin/python -m pytest -q)
 npm --prefix frontend ci
 npm --prefix frontend run lint
 npm --prefix frontend run build
 ```
 
-To fix Python formatting, run `backend/.venv/bin/python -m black backend`.
-Ruff and ESLint detect common code errors; these checks do not add a separate
-static type checker to this Python/JavaScript project.
+To fix Python formatting, run `backend/.venv/bin/python -m ruff format backend`.
 
 ## Getting started
 
@@ -60,8 +58,18 @@ cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # then add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)
+alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
+
+To apply a system instruction to every LLM request, set `SYSTEM_PROMPT` in
+`backend/.env`:
+
+```dotenv
+SYSTEM_PROMPT="Answer as a concise Solana development mentor."
+```
+
+Leave the setting empty to keep the provider's default behavior.
 
 After the backend has initialized the local database, load sample conversations
 for frontend development without making an LLM request:
@@ -72,6 +80,20 @@ python -m scripts.seed
 ```
 
 The command is idempotent, so rerunning it does not duplicate the sample data.
+
+Database schema changes are managed with Alembic. Run migration commands from
+the `backend` directory:
+
+```bash
+# Apply every pending migration
+alembic upgrade head
+
+# Create a migration after changing the SQLAlchemy models
+alembic revision --autogenerate -m "describe the schema change"
+
+# Revert the latest migration
+alembic downgrade -1
+```
 
 ### Frontend
 
@@ -102,3 +124,10 @@ or Docker setup -- those are the fellowship issues.
 Pick an issue from `ISSUES.md`, open a branch, and submit a PR. Issues
 are labeled by area (`backend`, `frontend`, `database`, `llm`, `infra`)
 and difficulty (`good first issue`, `intermediate`, `advanced`).
+
+## Message validation
+
+Message content must be a string containing 1–10,000 characters after surrounding
+whitespace is removed. Interior spaces and line breaks are preserved. Invalid
+payloads return HTTP 422 with validation details, without saving a message or
+calling the LLM.
