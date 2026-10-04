@@ -68,6 +68,8 @@ export default function App() {
           failed={chat.failed}
           onOpen={openConversation}
           onNew={startNewChat}
+          onRename={chat.renameConversation}
+          onDelete={chat.deleteConversation}
           theme={theme}
           onToggleTheme={toggleTheme}
         />

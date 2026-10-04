@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
-import { createConversation, getConversation, listConversations, sendMessage } from "../api/client.js";
+import {
+  createConversation,
+  deleteConversation as deleteConversationRequest,
+  getConversation,
+  listConversations,
+  renameConversation as renameConversationRequest,
+  sendMessage,
+} from "../api/client.js";
 
 function without(set, item) {
   const next = new Set(set);
@@ -63,6 +70,26 @@ export default function useChat() {
     setFailed((f) => omit(f, "new"));
   }
 
+  async function renameConversation(id, title) {
+    const updated = await renameConversationRequest(id, title);
+    setConversations((cs) => cs.map((conversation) => (
+      conversation.id === id ? { ...conversation, ...updated } : conversation
+    )));
+  }
+
+  async function deleteConversation(id) {
+    await deleteConversationRequest(id);
+    setConversations((cs) => cs.filter((conversation) => conversation.id !== id));
+    setPending((s) => without(s, id));
+    setUnread((s) => without(s, id));
+
+    if (activeRef.current === id) {
+      activeRef.current = null;
+      setActiveId(null);
+      setMessages([]);
+    }
+  }
+
   async function send(text) {
     let key = activeId ?? "new";
     setMessages((prev) => [...prev, { role: "user", content: text }]);
@@ -116,6 +143,8 @@ export default function useChat() {
     failedTexts: failed[key] ?? [],
     openConversation,
     startNewChat,
+    renameConversation,
+    deleteConversation,
     send,
     retry,
   };
