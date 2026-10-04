@@ -53,6 +53,8 @@ make backend-install PYTHON=python3.13
 Add your Gemini API key to `backend/.env`, then start the API:
 
 ```bash
+make backend-migrate
+make backend-seed
 make backend-run
 ```
 
@@ -73,7 +75,41 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 cp .env.example .env
 # Add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)
+python -m alembic upgrade head
 python -m uvicorn app.main:app --reload --port 8000
+```
+
+To apply a system instruction to every LLM request, set `SYSTEM_PROMPT` in
+`backend/.env`:
+
+```dotenv
+SYSTEM_PROMPT="Answer as a concise Solana development mentor."
+```
+
+Leave the setting empty to keep the provider's default behavior.
+
+After the backend has initialized the local database, load sample conversations
+for frontend development without making an LLM request:
+
+```bash
+cd backend
+python -m scripts.seed
+```
+
+The command is idempotent, so rerunning it does not duplicate the sample data.
+
+Database schema changes are managed with Alembic. Run migration commands from
+the `backend` directory:
+
+```bash
+# Apply every pending migration
+alembic upgrade head
+
+# Create a migration after changing the SQLAlchemy models
+alembic revision --autogenerate -m "describe the schema change"
+
+# Revert the latest migration
+alembic downgrade -1
 ```
 
 ### Frontend
@@ -112,11 +148,18 @@ npm run dev
 This scaffold gives you: a working conversation + message data model, one
 endpoint to send a message and get an LLM reply, and a minimal React UI
 that can hold a single conversation. It deliberately has **no**
-authentication, streaming, pagination, multi-conversation UI, migrations,
-or Docker setup -- those are the fellowship issues.
+authentication, streaming, pagination, or Docker setup -- those are the
+fellowship issues.
 
 ## Contributing
 
 Pick an issue from `ISSUES.md`, open a branch, and submit a PR. Issues
 are labeled by area (`backend`, `frontend`, `database`, `llm`, `infra`)
 and difficulty (`good first issue`, `intermediate`, `advanced`).
+
+## Message validation
+
+Message content must be a string containing 1–10,000 characters after surrounding
+whitespace is removed. Interior spaces and line breaks are preserved. Invalid
+payloads return HTTP 422 with validation details, without saving a message or
+calling the LLM.

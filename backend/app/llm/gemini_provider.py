@@ -28,5 +28,10 @@ class GeminiProvider(LLMProvider):
         response = self.client.models.generate_content(
             model=settings.gemini_model,
             contents=contents,
+            config=(
+                types.GenerateContentConfig(system_instruction=settings.system_prompt)
+                if settings.system_prompt
+                else None
+            ),
         )
         return response.text
