@@ -1,32 +1,31 @@
-// Thin wrapper around fetch for talking to the FastAPI backend.
-// Extend this as new endpoints are added (pagination, rename, delete...).
-
 const BASE = "/api";
 
-export async function createConversation(title) {
-  const res = await fetch(`${BASE}/conversations`, {
+async function request(path, options) {
+  const res = await fetch(`${BASE}${path}`, options);
+  if (!res.ok) throw new Error(`${options?.method ?? "GET"} ${path} failed with ${res.status}`);
+  return res.status === 204 ? null : res.json();
+}
+
+function post(path, body) {
+  return request(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify(body),
   });
-  return res.json();
 }
 
-export async function listConversations() {
-  const res = await fetch(`${BASE}/conversations`);
-  return res.json();
+export function createConversation(title) {
+  return post("/conversations", { title });
 }
 
-export async function getConversation(id) {
-  const res = await fetch(`${BASE}/conversations/${id}`);
-  return res.json();
+export function listConversations() {
+  return request("/conversations");
 }
 
-export async function sendMessage(conversationId, content) {
-  const res = await fetch(`${BASE}/conversations/${conversationId}/messages`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content }),
-  });
-  return res.json();
+export function getConversation(id) {
+  return request(`/conversations/${id}`);
+}
+
+export function sendMessage(conversationId, content) {
+  return post(`/conversations/${conversationId}/messages`, { content });
 }

@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.schemas import ValidationErrorOut
 
 
 def test_openapi_documents_routes_and_payloads():
@@ -27,6 +28,24 @@ def test_openapi_documents_routes_and_payloads():
     assert models["MessageCreate"]["examples"][0]["content"]
     assert models["ConversationCreate"]["properties"]["title"]["examples"]
     assert models["MessageOut"]["properties"]["content"]["examples"]
-    for path, method in routes[-2:]:
+    for path, method in [
+        ("/api/conversations/{conversation_id}", "get"),
+        ("/api/conversations/{conversation_id}/messages", "post"),
+    ]:
         assert "404" in schema["paths"][path][method]["responses"]
         assert "422" in schema["paths"][path][method]["responses"]
+
+
+def test_documented_validation_response_matches_invalid_message():
+    with TestClient(app) as client:
+        response = client.post("/api/conversations/missing/messages", json={"content": " "})
+        assert response.status_code == 422
+        error = ValidationErrorOut.model_validate(response.json())
+        assert error.detail[0].loc == ["body", "content"]
+        schema = client.get("/openapi.json").json()
+    documented = schema["paths"]["/api/conversations/{conversation_id}/messages"]["post"][
+        "responses"
+    ]["422"]
+    assert documented["content"]["application/json"]["schema"]["$ref"].endswith(
+        "/ValidationErrorOut"
+    )

@@ -1,16 +1,21 @@
 """Pydantic request/response schemas."""
-from datetime import datetime
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from datetime import datetime
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 class MessageCreate(BaseModel):
-    model_config = ConfigDict(json_schema_extra={
-        "examples": [{"content": "Explain how this project stores conversations."}]
-    })
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{"content": "Explain how this project stores conversations."}]
+        }
+    )
 
-    content: str
+    content: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=10000)
+    ]
 
 
 class MessageOut(BaseModel):
@@ -50,3 +55,23 @@ class HealthOut(BaseModel):
 
 class ErrorOut(BaseModel):
     detail: str = Field(examples=["Conversation not found"])
+
+
+class ValidationErrorDetail(BaseModel):
+    loc: list[str | int]
+    msg: str
+    type: str
+
+
+class ValidationErrorOut(BaseModel):
+    detail: list[ValidationErrorDetail] = Field(
+        examples=[
+            [
+                {
+                    "loc": ["body", "content"],
+                    "msg": "String should have at least 1 character",
+                    "type": "string_too_short",
+                }
+            ]
+        ]
+    )

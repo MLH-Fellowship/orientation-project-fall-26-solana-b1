@@ -5,6 +5,7 @@ This is the minimum needed for the UI to create a conversation, send a
 message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -15,16 +16,19 @@ from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
     ConversationOut,
-    MessageCreate,
     ErrorOut,
+    MessageCreate,
     MessageOut,
+    ValidationErrorOut,
 )
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
 
 @router.post(
-    "", response_model=ConversationOut, summary="Create a conversation",
+    "",
+    response_model=ConversationOut,
+    summary="Create a conversation",
     description="Create an empty conversation with an optional title. No LLM call is made.",
 )
 def create_conversation(payload: ConversationCreate, db: Session = Depends(get_db)):
@@ -36,7 +40,9 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 
 
 @router.get(
-    "", response_model=list[ConversationOut], summary="List conversations",
+    "",
+    response_model=list[ConversationOut],
+    summary="List conversations",
     description="Return all conversations, newest first, without message bodies.",
 )
 def list_conversations(db: Session = Depends(get_db)):
@@ -44,7 +50,8 @@ def list_conversations(db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/{conversation_id}", response_model=ConversationDetailOut,
+    "/{conversation_id}",
+    response_model=ConversationDetailOut,
     summary="Get a conversation with its messages",
     description="Look up a conversation by ID and return its saved messages.",
     responses={404: {"model": ErrorOut, "description": "Conversation not found"}},
@@ -57,15 +64,18 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
 
 
 @router.post(
-    "/{conversation_id}/messages", response_model=MessageOut,
+    "/{conversation_id}/messages",
+    response_model=MessageOut,
     summary="Send a message and receive an assistant reply",
     description=(
         "Save the user message, call the configured LLM with conversation history, "
         "then save and "
         "return the assistant reply. Requires a configured LLM API key. "
-        "Missing or incorrectly typed content returns HTTP 422."
     ),
-    responses={404: {"model": ErrorOut, "description": "Conversation not found"}},
+    responses={
+        404: {"model": ErrorOut, "description": "Conversation not found"},
+        422: {"model": ValidationErrorOut, "description": "Invalid message content"},
+    },
 )
 def send_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db)):
     convo = db.get(Conversation, conversation_id)

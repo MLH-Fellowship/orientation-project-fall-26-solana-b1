@@ -1,6 +1,7 @@
+import { ArrowUp } from "lucide-react";
 import { useState } from "react";
 
-export default function MessageInput({ onSend, disabled }) {
+export default function MessageInput({ onSend, disabled, inputRef }) {
   const [text, setText] = useState("");
 
   function handleSubmit() {
@@ -10,17 +11,18 @@ export default function MessageInput({ onSend, disabled }) {
   }
 
   return (
-    <div style={{ display: "flex", gap: 8 }}>
+    <div className="composer">
       <input
-        style={{ flex: 1, padding: 8 }}
+        ref={inputRef}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-        placeholder="Type a message..."
+        placeholder="Ask anything"
         disabled={disabled}
+        autoFocus
       />
-      <button onClick={handleSubmit} disabled={disabled}>
-        Send
+      <button onClick={handleSubmit} disabled={disabled || !text.trim()} aria-label="Send">
+        <ArrowUp size={16} strokeWidth={2.25} />
       </button>
     </div>
   );
