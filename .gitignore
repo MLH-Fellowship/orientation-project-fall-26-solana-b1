@@ -16,8 +16,19 @@ build/
 .DS_Store
 *.log
 
+.DS_Store
+
+# Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 .venv/
-.env
+backend/app.db
 app.db
+
+# Environment files
+.env
+
+# Node/Vite
+node_modules/
+dist/

@@ -14,9 +14,12 @@ export default function Sidebar({
   open,
   onOpenChange,
   conversations,
+  listState,
+  onRetryList,
   activeId,
   pending,
   unread,
+  failed,
   onOpen,
   onNew,
   theme, // <-- Destructure theme
@@ -30,10 +33,14 @@ export default function Sidebar({
   });
 
   useShortcut("mod+k", search.start);
-  useEffect(tooltip.hide, [open]);
+  const hideTooltip = tooltip.hide;
+  useEffect(() => {
+    hideTooltip();
+  }, [open, hideTooltip]);
 
   function statusOf(id) {
     if (pending.has(id)) return "pending";
+    if (failed[id]) return "failed";
     if (unread.has(id)) return "unread";
     return null;
   }
@@ -82,19 +89,18 @@ export default function Sidebar({
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {open && (
-          <nav
-            className={"chats" + (groups.dragId ? " is-dragging" : "")}
-            {...groups.dropTarget("loose", {})}
-          >
-            <ChatList
-              conversations={conversations}
-              search={search}
-              groups={groups}
-              unread={unread}
-              renderRow={renderRow}
-            />
-          </nav>
-        )}
+        <nav className={"chats" + (groups.dragId ? " is-dragging" : "")} {...groups.dropTarget("loose", {})}>
+          <ChatList
+            conversations={conversations}
+            listState={listState}
+            onRetry={onRetryList}
+            search={search}
+            groups={groups}
+            unread={unread}
+            renderRow={renderRow}
+          />
+        </nav>
+      )}
       </div>
 
       <div className="mt-auto pt-2 border-t border-[var(--line)]">
@@ -111,7 +117,7 @@ export default function Sidebar({
           </span>
         </button>
       </div>
-
+      
       <Tooltip tip={tooltip.tip} />
     </aside>
   );

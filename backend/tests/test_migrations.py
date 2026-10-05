@@ -36,18 +36,14 @@ def test_initial_migration_upgrades_and_downgrades(tmp_path):
 
     with engine.begin() as connection:
         connection.execute(text("PRAGMA foreign_keys = ON"))
-        connection.execute(
-            text("INSERT INTO conversations (id) VALUES ('conversation-1')")
-        )
+        connection.execute(text("INSERT INTO conversations (id) VALUES ('conversation-1')"))
         connection.execute(
             text(
                 "INSERT INTO messages (id, conversation_id, role, content) "
                 "VALUES ('message-1', 'conversation-1', 'user', 'hello')"
             )
         )
-        connection.execute(
-            text("DELETE FROM conversations WHERE id = 'conversation-1'")
-        )
+        connection.execute(text("DELETE FROM conversations WHERE id = 'conversation-1'"))
         assert connection.execute(text("SELECT COUNT(*) FROM messages")).scalar() == 0
 
     command.downgrade(config, "base")

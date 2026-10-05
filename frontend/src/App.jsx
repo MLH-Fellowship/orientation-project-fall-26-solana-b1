@@ -56,15 +56,17 @@ export default function App() {
 
   return (
     <div className="h-full bg-[var(--chrome)] text-[var(--ink)] transition-colors duration-200">
-      {" "}
       <div className="app">
         <Sidebar
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           conversations={chat.conversations}
+          listState={chat.listState}
+          onRetryList={chat.reloadConversations}
           activeId={chat.activeId}
           pending={chat.pending}
           unread={chat.unread}
+          failed={chat.failed}
           onOpen={openConversation}
           onNew={startNewChat}
           theme={theme}
@@ -79,6 +81,7 @@ export default function App() {
           inputRef={inputRef}
           sidebarOpen={sidebarOpen}
           onOpenSidebar={() => setSidebarOpen(true)}
+          onRetryLoad={() => chat.openConversation(chat.activeId)}
         />
       </div>
     </div>

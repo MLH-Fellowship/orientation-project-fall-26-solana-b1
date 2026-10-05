@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import Conversation, Message
 
-
 SEED_CONVERSATIONS = (
     {
         "id": "00000000-0000-4000-8000-000000000001",
