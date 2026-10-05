@@ -9,7 +9,8 @@ function without(set, item) {
 }
 
 function omit(obj, key) {
-  const { [key]: _, ...rest } = obj;
+  const rest = { ...obj };
+  delete rest[key];
   return rest;
 }
 

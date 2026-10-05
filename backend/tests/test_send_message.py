@@ -14,7 +14,9 @@ class FailingProvider:
 
 
 def test_failed_reply_does_not_save_user_message(tmp_path, monkeypatch):
-    engine = create_engine(f"sqlite:///{tmp_path / 'chat.db'}", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        f"sqlite:///{tmp_path / 'chat.db'}", connect_args={"check_same_thread": False}
+    )
     Base.metadata.create_all(bind=engine)
     session_factory = sessionmaker(autoflush=False, bind=engine)
 
@@ -31,7 +33,9 @@ def test_failed_reply_does_not_save_user_message(tmp_path, monkeypatch):
         client = TestClient(app, raise_server_exceptions=False)
         convo = client.post("/api/conversations", json={"title": "Test"}).json()
 
-        response = client.post(f"/api/conversations/{convo['id']}/messages", json={"content": "hello"})
+        response = client.post(
+            f"/api/conversations/{convo['id']}/messages", json={"content": "hello"}
+        )
 
         assert response.status_code == 500
         with session_factory() as db:
