@@ -1,4 +1,4 @@
-# User model
+# Database relationships
 
 `users` contains a UUID string primary key (`id`), required unique `email`,
 and `created_at`, using the existing Python UTC timestamp default convention.
@@ -9,6 +9,15 @@ constraint alone does not guarantee case-insensitive email uniqueness.
 requests continue to create unowned conversations. SQLAlchemy exposes ownership
 through `Conversation.user` and `User.conversations`. No password or auth
 endpoints are included.
+
+## Relationship indexes
+
+`ix_conversations_user_id` indexes conversation ownership. The message-index
+revision (`20261005_0003`) adds `ix_messages_conversation_id` for fetching a
+conversation's messages and locating dependent rows during deletion. Both are
+non-unique indexes; a user can own multiple conversations and a conversation can
+contain multiple messages. Downgrading to `20261003_0002` removes only the message
+index, preserving rows, foreign keys, and the ownership index.
 
 ## Schema migrations
 
@@ -40,7 +49,16 @@ SQLite table changes use Alembic batch operations.
 No destructive cascade from users to conversations is configured. With normal
 ORM `Session.delete(user)`, SQLAlchemy clears associated conversations' `user_id`.
 The user foreign key has no database `ON DELETE` action. The existing
-conversation-to-message ORM `all, delete-orphan` cascade is unchanged.
+conversation-to-message ORM `all, delete-orphan` cascade is unchanged. Deleting
+a conversation through the ORM deletes its messages but preserves its user and
+other conversations. Removing a message from `Conversation.messages` deletes
+that message when the session is flushed.
+
+With database foreign-key enforcement enabled, direct SQL conversation deletion
+also deletes its messages through `ON DELETE CASCADE`. Direct SQL user deletion
+is rejected while owned conversations remain; clear their nullable `user_id`
+first to preserve them. ORM deletion and direct SQL deletion intentionally have
+different user handling.
 
 SQLite foreign-key enforcement is not enabled by the current application engine;
 declaring a foreign key alone does not enable it. Tests explicitly enable it when
