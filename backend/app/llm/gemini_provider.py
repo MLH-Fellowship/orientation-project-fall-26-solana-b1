@@ -43,9 +43,7 @@ class GeminiProvider(LLMProvider):
             "Reply with ONLY the title, no quotes or punctuation.\n\n"
             f"User: {user_message}\nAssistant: {assistant_message}"
         )
-        contents = [
-            types.Content(role="user", parts=[types.Part(text=prompt)])
-        ]
+        contents = [types.Content(role="user", parts=[types.Part(text=prompt)])]
         response = self.client.models.generate_content(
             model=settings.gemini_model,
             contents=contents,

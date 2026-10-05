@@ -3,6 +3,7 @@ Tests for auto-generated conversation titles.
 
 Uses an in-memory SQLite DB and a fake LLM provider.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -54,6 +55,7 @@ def setup_overrides():
     """Swap real DB and LLM with test doubles for every test."""
     app.dependency_overrides[get_db] = override_get_db
     import app.routes.chat as chat_module
+
     original_get_llm = chat_module.get_llm_provider
     chat_module.get_llm_provider = fake_llm_provider
 
@@ -72,6 +74,7 @@ def setup_overrides():
 @pytest.fixture
 def client():
     return TestClient(app)
+
 
 def create_conversation(client, title=None):
     body = {"title": title} if title else {}

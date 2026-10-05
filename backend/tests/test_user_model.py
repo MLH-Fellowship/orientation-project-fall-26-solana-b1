@@ -22,10 +22,8 @@ def migration_config(database_url):
 
 
 def schema_columns(inspector, table):
-    return [
-        {**column, "type": str(column["type"])}
-        for column in inspector.get_columns(table)
-    ]
+    return [{**column, "type": str(column["type"])} for column in inspector.get_columns(table)]
+
 
 @pytest.fixture
 def engine(tmp_path):
@@ -110,7 +108,9 @@ def test_upgrade_preserves_data_and_can_be_repeated(tmp_path):
         message_columns = schema_columns(initial, "messages")
         message_foreign_keys = initial.get_foreign_keys("messages")
         with engine.begin() as connection:
-            connection.exec_driver_sql("INSERT INTO conversations (id, title) VALUES ('old', 'Existing')")
+            connection.exec_driver_sql(
+                "INSERT INTO conversations (id, title) VALUES ('old', 'Existing')"
+            )
             connection.exec_driver_sql(
                 "INSERT INTO messages (id, conversation_id, role, content) "
                 "VALUES ('msg', 'old', 'user', 'Hello')"
@@ -120,7 +120,8 @@ def test_upgrade_preserves_data_and_can_be_repeated(tmp_path):
         command.check(config)
         migrated = inspect(engine)
         assert [
-            column for column in schema_columns(migrated, "conversations")
+            column
+            for column in schema_columns(migrated, "conversations")
             if column["name"] != "user_id"
         ] == conversation_columns
         assert schema_columns(migrated, "messages") == message_columns
@@ -158,8 +159,16 @@ def test_upgrade_preserves_data_and_can_be_repeated(tmp_path):
         assert inspector.get_indexes("conversations") == []
         assert inspector.get_foreign_keys("conversations") == []
         with engine.connect() as connection:
-            assert connection.exec_driver_sql("SELECT title FROM conversations WHERE id = 'old'").scalar() == "Existing"
-            assert connection.exec_driver_sql("SELECT content FROM messages WHERE id = 'msg'").scalar() == "Hello"
+            assert (
+                connection.exec_driver_sql(
+                    "SELECT title FROM conversations WHERE id = 'old'"
+                ).scalar()
+                == "Existing"
+            )
+            assert (
+                connection.exec_driver_sql("SELECT content FROM messages WHERE id = 'msg'").scalar()
+                == "Hello"
+            )
         command.upgrade(config, "head")
         with Session(engine) as session:
             assert session.get(Conversation, "old").user_id is None
@@ -192,7 +201,10 @@ def test_chat_flow_after_migration(engine, monkeypatch):
             assert response.json()["content"] == "Hello back"
             response = client.get(f"/api/conversations/{conversation_id}")
             assert response.status_code == 200
-            assert [message["content"] for message in response.json()["messages"]] == ["Hello", "Hello back"]
+            assert [message["content"] for message in response.json()["messages"]] == [
+                "Hello",
+                "Hello back",
+            ]
             response = client.get("/api/conversations")
             assert response.status_code == 200
             assert any(item["id"] == conversation_id for item in response.json())
