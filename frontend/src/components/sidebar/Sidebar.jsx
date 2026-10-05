@@ -14,9 +14,12 @@ export default function Sidebar({
   open,
   onOpenChange,
   conversations,
+  listState,
+  onRetryList,
   activeId,
   pending,
   unread,
+  failed,
   onOpen,
   onNew,
 }) {
@@ -25,10 +28,14 @@ export default function Sidebar({
   const search = useChatSearch(conversations, { onStart: () => onOpenChange(true), onPick: onOpen });
 
   useShortcut("mod+k", search.start);
-  useEffect(tooltip.hide, [open]);
+  const hideTooltip = tooltip.hide;
+  useEffect(() => {
+    hideTooltip();
+  }, [open, hideTooltip]);
 
   function statusOf(id) {
     if (pending.has(id)) return "pending";
+    if (failed[id]) return "failed";
     if (unread.has(id)) return "unread";
     return null;
   }
@@ -71,6 +78,8 @@ export default function Sidebar({
         <nav className={"chats" + (groups.dragId ? " is-dragging" : "")} {...groups.dropTarget("loose", {})}>
           <ChatList
             conversations={conversations}
+            listState={listState}
+            onRetry={onRetryList}
             search={search}
             groups={groups}
             unread={unread}

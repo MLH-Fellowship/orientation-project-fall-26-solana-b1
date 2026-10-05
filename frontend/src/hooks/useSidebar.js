@@ -20,7 +20,9 @@ export default function useSidebar() {
     if (isNarrow()) return;
     try {
       localStorage.setItem("sidebar", open ? "open" : "closed");
-    } catch {}
+    } catch {
+      // Keep the sidebar usable when browser storage is unavailable.
+    }
   }, [open]);
 
   useShortcut("mod+b", () => setOpen((o) => !o));

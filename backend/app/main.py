@@ -4,6 +4,7 @@ FastAPI application entrypoint.
 Run with:
     uvicorn app.main:app --reload --port 8000
 """
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

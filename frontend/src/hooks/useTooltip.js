@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 const DELAY = 400;
 const WARM = 300;
@@ -10,13 +10,13 @@ export default function useTooltip() {
   const shown = useRef(false);
   const warmUntil = useRef(0);
 
-  function hide() {
+  const hide = useCallback(() => {
     clearTimeout(timer.current);
     if (shown.current) warmUntil.current = Date.now() + WARM;
     shown.current = false;
     anchor.current = null;
     setTip(null);
-  }
+  }, []);
 
   function onPointerOver(e) {
     const el = e.target.closest("[data-tip]");

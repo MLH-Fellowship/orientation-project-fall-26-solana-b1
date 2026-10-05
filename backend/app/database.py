@@ -1,10 +1,10 @@
 """
 Database engine and session management (SQLAlchemy).
 
-Barebones: SQLite file DB, tables created on startup via
-Base.metadata.create_all(). A real migration workflow (Alembic) is
-left as an open issue for fellows -- see ISSUES.md.
+Schema changes are managed by Alembic. Run `alembic upgrade head` from
+the backend directory before starting the application.
 """
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
