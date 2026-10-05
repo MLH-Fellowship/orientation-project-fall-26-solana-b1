@@ -4,6 +4,7 @@ Database engine and session management (SQLAlchemy).
 Schema changes are managed by Alembic. Run `alembic upgrade head` from
 the backend directory before starting the application.
 """
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 

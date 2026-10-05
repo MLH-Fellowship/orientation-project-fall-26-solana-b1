@@ -28,7 +28,10 @@ export default function Sidebar({
   const search = useChatSearch(conversations, { onStart: () => onOpenChange(true), onPick: onOpen });
 
   useShortcut("mod+k", search.start);
-  useEffect(tooltip.hide, [open]);
+  const hideTooltip = tooltip.hide;
+  useEffect(() => {
+    hideTooltip();
+  }, [open, hideTooltip]);
 
   function statusOf(id) {
     if (pending.has(id)) return "pending";
