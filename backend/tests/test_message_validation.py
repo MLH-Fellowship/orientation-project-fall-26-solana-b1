@@ -70,4 +70,3 @@ def test_valid_content_is_trimmed_saved_and_sent_to_llm(api, content, expected):
         messages = session.query(Message).all()
         assert len(messages) == 2
         assert next(m.content for m in messages if m.role == "user") == expected
-

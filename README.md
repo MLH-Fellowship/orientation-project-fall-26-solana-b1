@@ -33,13 +33,50 @@ scripts/dev.sh            # runs backend + frontend together
 
 ### Backend
 
+The pinned backend dependencies support Python 3.10 through 3.13. Python
+3.14 is not currently supported by the pinned Pydantic release.
+
+From the repository root, create the virtual environment, install the
+dependencies, and copy the environment template with:
+
+```bash
+make backend-install
+```
+
+If your default `python3` is newer than Python 3.13, select a supported
+interpreter explicitly. For example:
+
+```bash
+make backend-install PYTHON=python3.13
+```
+
+Add your Gemini API key to `backend/.env`, then start the API:
+
+```bash
+make backend-migrate
+make backend-seed
+make backend-run
+```
+
+The API is available at `http://localhost:8000`; verify it with
+`http://localhost:8000/api/health`. Run the backend tests with:
+
+```bash
+make backend-test
+```
+
+The equivalent manual setup is:
+
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # then add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)
-alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+cp .env.example .env
+# Add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 To apply a system instruction to every LLM request, set `SYSTEM_PROMPT` in
@@ -77,13 +114,28 @@ alembic downgrade -1
 
 ### Frontend
 
+The frontend requires Node.js 18 or newer. From the repository root,
+install the locked dependencies and start Vite with:
+
 ```bash
-cd frontend
-npm install
-npm run dev
+make frontend-install
+make frontend-run
 ```
 
-Then visit `http://localhost:5173`.
+Then visit `http://localhost:5173`. To verify that the production bundle
+builds successfully, run:
+
+```bash
+make frontend-build
+```
+
+The equivalent manual setup is:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
 
 ### Or run both at once
 
@@ -96,8 +148,8 @@ Then visit `http://localhost:5173`.
 This scaffold gives you: a working conversation + message data model, one
 endpoint to send a message and get an LLM reply, and a minimal React UI
 that can hold a single conversation. It deliberately has **no**
-authentication, streaming, pagination, multi-conversation UI, migrations,
-or Docker setup -- those are the fellowship issues.
+authentication, streaming, pagination, or Docker setup -- those are the
+fellowship issues.
 
 ## Contributing
 
