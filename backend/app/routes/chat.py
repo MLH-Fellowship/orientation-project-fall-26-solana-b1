@@ -87,11 +87,10 @@ def send_message(conversation_id: str, payload: MessageCreate, db: Session = Dep
 
     user_msg = Message(conversation_id=conversation_id, role="user", content=payload.content)
     db.add(user_msg)
-    db.commit()
-    db.refresh(convo)
     # Flush, not commit: if the LLM call fails the session rolls back,
     # so a retry from the UI doesn't save the user message twice.
     db.flush()
+    db.refresh(convo)
 
     history = [{"role": m.role, "content": m.content} for m in convo.messages]
 
