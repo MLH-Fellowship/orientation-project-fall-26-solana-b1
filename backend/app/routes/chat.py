@@ -5,6 +5,8 @@ This is the minimum needed for the UI to create a conversation, send a
 message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -15,6 +17,7 @@ from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
     ConversationOut,
+    ConversationUpdate,
     MessageCreate,
     MessageOut,
 )
@@ -42,6 +45,30 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return convo
+
+
+@router.patch("/{conversation_id}", response_model=ConversationOut)
+def rename_conversation(
+    conversation_id: UUID,
+    payload: ConversationUpdate,
+    db: Session = Depends(get_db),
+):
+    convo = db.get(Conversation, str(conversation_id))
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    convo.title = payload.title
+    db.commit()
+    db.refresh(convo)
+    return convo
+
+
+@router.delete("/{conversation_id}", status_code=204)
+def delete_conversation(conversation_id: UUID, db: Session = Depends(get_db)):
+    convo = db.get(Conversation, str(conversation_id))
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    db.delete(convo)  # cascades to messages via the ORM relationship
+    db.commit()
 
 
 @router.post("/{conversation_id}/messages", response_model=MessageOut)
