@@ -18,7 +18,7 @@ from app.schemas import (
     MessageCreate,
     MessageOut,
 )
-from app.titles import DEFAULT_TITLE, resolve_title
+from app.utils.titles import DEFAULT_TITLE, resolve_title
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 

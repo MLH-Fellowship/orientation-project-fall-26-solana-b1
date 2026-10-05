@@ -12,7 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base, get_db
 from app.llm.base import LLMProvider
 from app.main import app
-from app.titles import DEFAULT_TITLE
+from app.utils.titles import DEFAULT_TITLE
 
 
 engine = create_engine(
