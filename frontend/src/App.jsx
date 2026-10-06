@@ -6,7 +6,6 @@ import useChat from "./hooks/useChat.js";
 import useShortcut from "./hooks/useShortcut.js";
 import useSidebar, { isNarrow } from "./hooks/useSidebar.js";
 
-import { Moon, Sun } from "lucide-react";
 
 export default function App() {
   const chat = useChat();
