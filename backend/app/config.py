@@ -6,7 +6,9 @@ settings here as the project grows (e.g. rate limit thresholds,
 alternate LLM providers, auth secrets).
 """
 
-from pydantic import field_validator
+from pathlib import Path
+
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,6 +25,13 @@ class Settings(BaseSettings):
 
     # CORS - the Vite dev server default port
     frontend_origin: str = "http://localhost:5173"
+
+    # Logging configuration
+    log_level: str = "INFO"
+    logging_config_path: Path = Field(
+        default=Path("configs/logging/logging.conf"),
+        validation_alias="LOGGING_CONFIG_PATH",
+    )
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
