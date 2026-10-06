@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     # Logging configuration
     log_level: str = "INFO"
     logging_config_path: Path = Field(
+        default=Path("configs/logging/logging.conf"),
         validation_alias="LOGGING_CONFIG_PATH",
     )
 
