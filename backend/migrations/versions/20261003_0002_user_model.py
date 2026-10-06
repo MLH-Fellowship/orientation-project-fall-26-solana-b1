@@ -20,9 +20,7 @@ def upgrade() -> None:
     )
     with op.batch_alter_table("conversations") as batch_op:
         batch_op.add_column(sa.Column("user_id", sa.String(), nullable=True))
-        batch_op.create_foreign_key(
-            "fk_conversations_user_id_users", "users", ["user_id"], ["id"]
-        )
+        batch_op.create_foreign_key("fk_conversations_user_id_users", "users", ["user_id"], ["id"])
         batch_op.create_index("ix_conversations_user_id", ["user_id"])
 
 
