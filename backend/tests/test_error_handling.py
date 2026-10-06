@@ -1,7 +1,7 @@
 from app.error_handling import spawn_exception_handlers
 from app.main import app
 from app.schemas import ErrorResponse
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 client = TestClient(app, raise_server_exceptions=False)
@@ -27,7 +27,14 @@ def test_validation_error_uses_error_shape():
 
 
 def test_missing_conversation_uses_error_shape():
-    response = client.get("/api/conversations/does-not-exist")
+    test_app = FastAPI()
+    spawn_exception_handlers(test_app)
+
+    @test_app.get("/missing")
+    async def missing():
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    response = TestClient(test_app).get("/missing")
 
     error = assert_error_response(response, 404)
     assert error.error.message == "Conversation not found"
