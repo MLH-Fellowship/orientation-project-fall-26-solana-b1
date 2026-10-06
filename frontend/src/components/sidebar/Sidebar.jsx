@@ -1,4 +1,4 @@
-import { PanelLeft } from "lucide-react";
+import { PanelLeft, Sun, Moon } from "lucide-react";
 import { useEffect } from "react";
 
 import useChatGroups from "../../hooks/useChatGroups.js";
@@ -22,10 +22,15 @@ export default function Sidebar({
   failed,
   onOpen,
   onNew,
+  theme, // <-- Destructure theme
+  onToggleTheme,
 }) {
   const groups = useChatGroups();
   const tooltip = useTooltip();
-  const search = useChatSearch(conversations, { onStart: () => onOpenChange(true), onPick: onOpen });
+  const search = useChatSearch(conversations, {
+    onStart: () => onOpenChange(true),
+    onPick: onOpen,
+  });
 
   useShortcut("mod+k", search.start);
   const hideTooltip = tooltip.hide;
@@ -58,7 +63,10 @@ export default function Sidebar({
   }
 
   return (
-    <aside className={"sidebar" + (open ? "" : " collapsed")} {...tooltip.handlers}>
+    <aside
+      className={"sidebar" + (open ? "" : " collapsed")}
+      {...tooltip.handlers}
+    >
       <header className="sidebar-top">
         <button
           className="icon-button"
@@ -72,9 +80,15 @@ export default function Sidebar({
         </button>
       </header>
 
-      <SidebarNav open={open} newChatActive={activeId === null} onNew={onNew} search={search} />
+      <SidebarNav
+        open={open}
+        newChatActive={activeId === null}
+        onNew={onNew}
+        search={search}
+      />
 
-      {open && (
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        {open && (
         <nav className={"chats" + (groups.dragId ? " is-dragging" : "")} {...groups.dropTarget("loose", {})}>
           <ChatList
             conversations={conversations}
@@ -87,7 +101,23 @@ export default function Sidebar({
           />
         </nav>
       )}
+      </div>
 
+      <div className="mt-auto pt-2 border-t border-[var(--line)]">
+        <button
+          onClick={onToggleTheme}
+          className="nav-item flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors hover:bg-[var(--hover)] text-[var(--ink-2)]"
+        >
+          <span className="relative flex h-4 w-4 items-center justify-center">
+            <Sun className="h-4 w-4 rotate-0 scale-100 text-amber-500 transition-all duration-500 dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 text-indigo-400 transition-all duration-500 dark:rotate-0 dark:scale-100" />
+          </span>
+          <span className="label">
+            {theme === "light" ? "Light Mode" : "Dark Mode"}
+          </span>
+        </button>
+      </div>
+      
       <Tooltip tip={tooltip.tip} />
     </aside>
   );
