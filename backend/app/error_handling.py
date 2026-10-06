@@ -24,9 +24,7 @@ def error_response(
     )
 
 
-async def validation_error_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     return error_response(
         422,
         "VALIDATION ERROR",
@@ -35,9 +33,7 @@ async def validation_error_handler(
     )
 
 
-async def not_found_error_handler(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def not_found_error_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     code = "NOT FOUND" if exc.status_code == 404 else "HTTP_GENERIC_ERROR"
     return error_response(exc.status_code, code, str(exc.detail), exc.headers)
 

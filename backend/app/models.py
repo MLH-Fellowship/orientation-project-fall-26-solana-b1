@@ -20,6 +20,7 @@ from app.database import Base
 def _uuid() -> str:
     return str(uuid.uuid4())
 
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
@@ -45,4 +46,3 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")
-
