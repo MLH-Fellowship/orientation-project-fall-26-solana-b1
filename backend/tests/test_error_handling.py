@@ -1,9 +1,8 @@
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
-
 from app.error_handling import spawn_exception_handlers
 from app.main import app
 from app.schemas import ErrorResponse
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 client = TestClient(app, raise_server_exceptions=False)
 
@@ -12,7 +11,7 @@ def assert_error_response(response, status_code: int) -> ErrorResponse:
     assert response.status_code == status_code
     body = response.json()
     assert set(body) == {"error"}
-    assert set(body["error"]) == {"code", "message"}
+    assert {"code", "message"}.issubset(body["error"])
     error = ErrorResponse.model_validate(body)
     assert error.error.code
     assert error.error.message
@@ -22,7 +21,9 @@ def assert_error_response(response, status_code: int) -> ErrorResponse:
 def test_validation_error_uses_error_shape():
     response = client.post("/api/conversations", json={"title": []})
 
-    assert_error_response(response, 422)
+    error = assert_error_response(response, 422)
+    assert error.error.details
+    assert {"loc", "msg", "type"}.issubset(error.error.details[0])
 
 
 def test_missing_conversation_uses_error_shape():

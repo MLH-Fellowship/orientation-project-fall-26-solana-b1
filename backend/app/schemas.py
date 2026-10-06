@@ -1,6 +1,5 @@
-"""Pydantic request/response schemas."""
-from fastapi.responses import JSONResponse
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -8,9 +7,12 @@ from pydantic import BaseModel
 class ErrorDetail(BaseModel):
     code: str
     message: str
-    
+    details: list[dict[str, Any]] | None = None
+
+
 class ErrorResponse(BaseModel):
     error: ErrorDetail
+
 
 class MessageCreate(BaseModel):
     content: str
