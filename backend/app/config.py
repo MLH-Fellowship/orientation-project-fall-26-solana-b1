@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     # CORS - the Vite dev server default port
     frontend_origin: str = "http://localhost:5173"
 
-    # Logging configuration 
+    # Logging configuration
     log_level: str = "INFO"
     logging_config_path: Path = Field(
         validation_alias="LOGGING_CONFIG_PATH",

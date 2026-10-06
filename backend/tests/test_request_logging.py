@@ -67,9 +67,7 @@ def test_logs_500_and_reraises_unhandled_errors(monkeypatch):
 
     with pytest.raises(RuntimeError, match="unexpected failure"):
         asyncio.run(
-            request_logging.log_request(
-                make_request("GET", "/api/failing"), failing_endpoint
-            )
+            request_logging.log_request(make_request("GET", "/api/failing"), failing_endpoint)
         )
 
     message, method, path, status_code, duration_ms = log_exception.call_args.args

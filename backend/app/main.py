@@ -4,8 +4,6 @@ FastAPI application entrypoint.
 Run with:
     uvicorn app.main:app --reload --port 8000
 """
-
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,7 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.middleware('http')(log_request)
+app.middleware("http")(log_request)
 
 app.include_router(health.router, prefix="/api")
 app.include_router(chat.router)
