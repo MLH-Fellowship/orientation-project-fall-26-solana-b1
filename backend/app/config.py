@@ -5,6 +5,7 @@ Loads settings from environment variables / a .env file. Add new
 settings here as the project grows (e.g. rate limit thresholds,
 alternate LLM providers, auth secrets).
 """
+
 from pathlib import Path
 
 from pydantic import Field, field_validator
