@@ -1,5 +1,34 @@
-frontend/node_modules/
-backend/.venv/
-backend/app.db
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Environment & API Keys (DO NOT COMMIT)
+.env
+.env.local
+.env.*.local
+
+# Build Outputs & Cache
+dist/
+build/
+.DS_Store
+*.log
+
+.DS_Store
+
+# Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.venv/
+backend/app.db
+app.db
+
+# Environment files
+.env
+
+# Node/Vite
+node_modules/
+dist/

@@ -4,15 +4,13 @@ FastAPI application entrypoint.
 Run with:
     uvicorn app.main:app --reload --port 8000
 """
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.database import Base, engine
 from app.routes import chat, health
 from app.error_handling import spawn_exception_handlers
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.app_name)
 spawn_exception_handlers(app)

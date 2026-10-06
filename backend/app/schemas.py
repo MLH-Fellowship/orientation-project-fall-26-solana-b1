@@ -1,7 +1,9 @@
-from datetime import datetime
-from typing import Any
+"""Pydantic request/response schemas."""
 
-from pydantic import BaseModel
+from datetime import datetime
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 class ErrorDetail(BaseModel):
@@ -15,13 +17,21 @@ class ErrorResponse(BaseModel):
 
 
 class MessageCreate(BaseModel):
-    content: str
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{"content": "Explain how this project stores conversations."}]
+        }
+    )
+
+    content: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=10000)
+    ]
 
 
 class MessageOut(BaseModel):
     id: str
-    role: str
-    content: str
+    role: str = Field(examples=["assistant"])
+    content: str = Field(examples=["Conversations are stored in SQLite."])
     created_at: datetime
 
     class Config:
@@ -29,7 +39,11 @@ class MessageOut(BaseModel):
 
 
 class ConversationCreate(BaseModel):
-    title: str | None = None
+    title: str | None = Field(
+        default=None,
+        description="Optional title; defaults to New Conversation.",
+        examples=["Learning FastAPI"],
+    )
 
 
 class ConversationOut(BaseModel):
@@ -43,3 +57,31 @@ class ConversationOut(BaseModel):
 
 class ConversationDetailOut(ConversationOut):
     messages: list[MessageOut] = []
+
+
+class HealthOut(BaseModel):
+    status: Literal["ok"] = Field(description="Application is responding.")
+
+
+class ErrorOut(BaseModel):
+    detail: str = Field(examples=["Conversation not found"])
+
+
+class ValidationErrorDetail(BaseModel):
+    loc: list[str | int]
+    msg: str
+    type: str
+
+
+class ValidationErrorOut(BaseModel):
+    detail: list[ValidationErrorDetail] = Field(
+        examples=[
+            [
+                {
+                    "loc": ["body", "content"],
+                    "msg": "String should have at least 1 character",
+                    "type": "string_too_short",
+                }
+            ]
+        ]
+    )
