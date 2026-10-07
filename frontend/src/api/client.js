@@ -15,11 +15,12 @@ function post(path, body) {
 }
 
 export function createConversation(title) {
-  return post("/conversations", { title });
+  return post("/conversations", title ? { title } : {});
 }
 
-export function listConversations() {
-  return request("/conversations");
+export function listConversations({ limit = 100, offset = 0 } = {}) {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  return request(`/conversations?${params}`);
 }
 
 export function getConversation(id) {

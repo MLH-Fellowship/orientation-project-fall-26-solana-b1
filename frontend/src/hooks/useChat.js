@@ -14,6 +14,21 @@ function omit(obj, key) {
   return rest;
 }
 
+async function loadAllConversations() {
+  const pageSize = 100;
+  const items = [];
+  let offset = 0;
+  let total = Infinity;
+  while (offset < total) {
+    const page = await listConversations({ limit: pageSize, offset });
+    items.push(...page.items);
+    total = page.total;
+    if (page.items.length === 0) break;
+    offset += page.items.length;
+  }
+  return items;
+}
+
 export default function useChat() {
   const [conversations, setConversations] = useState([]);
   const [listState, setListState] = useState("loading");
@@ -30,9 +45,9 @@ export default function useChat() {
 
   function loadConversations() {
     setListState("loading");
-    listConversations()
-      .then((cs) => {
-        setConversations(cs);
+    loadAllConversations()
+      .then((items) => {
+        setConversations(items);
         setListState("ready");
       })
       .catch(() => setListState("error"));
@@ -65,11 +80,12 @@ export default function useChat() {
 
   async function send(text) {
     let key = activeId ?? "new";
+    const isNew = key === "new";
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setPending((s) => new Set(s).add(key));
     try {
-      if (key === "new") {
-        const convo = await createConversation(text.slice(0, 60));
+      if (isNew) {
+        const convo = await createConversation();
         setConversations((cs) => [{ ...convo, fresh: true }, ...cs]);
         setPending((s) => without(s, "new").add(convo.id));
         setFailed((f) => (f.new ? { ...omit(f, "new"), [convo.id]: f.new } : f));
@@ -80,6 +96,14 @@ export default function useChat() {
         }
       }
       const reply = await sendMessage(key, text);
+      if (isNew) {
+        try {
+          const full = await getConversation(key);
+          setConversations((cs) => cs.map((c) => (c.id === key ? { ...c, title: full.title } : c)));
+        } catch {
+          // The reply is saved. The row keeps "New Conversation" until the next reload.
+        }
+      }
       if (activeRef.current === key) setMessages((prev) => [...prev, reply]);
       else setUnread((s) => new Set(s).add(key));
     } catch {
