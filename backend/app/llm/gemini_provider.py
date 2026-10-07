@@ -60,3 +60,15 @@ class GeminiProvider(LLMProvider):
         for chunk in response:
             if chunk.text:
                 yield chunk.text
+    def generate_title(self, user_message: str, assistant_message: str) -> str:
+        prompt = (
+            "Generate a short conversation title of 3–6 words based on the exchange below. "
+            "Reply with ONLY the title, no quotes or punctuation.\n\n"
+            f"User: {user_message}\nAssistant: {assistant_message}"
+        )
+        contents = [types.Content(role="user", parts=[types.Part(text=prompt)])]
+        response = self.client.models.generate_content(
+            model=settings.gemini_model,
+            contents=contents,
+        )
+        return response.text

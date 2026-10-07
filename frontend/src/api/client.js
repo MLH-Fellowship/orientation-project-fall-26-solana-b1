@@ -14,6 +14,14 @@ function post(path, body) {
   });
 }
 
+function patch(path, body) {
+  return request(path, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export function createConversation(title) {
   return post("/conversations", { title });
 }
@@ -24,6 +32,14 @@ export function listConversations() {
 
 export function getConversation(id) {
   return request(`/conversations/${id}`);
+}
+
+export function renameConversation(id, title) {
+  return patch(`/conversations/${id}`, { title });
+}
+
+export function deleteConversation(id) {
+  return request(`/conversations/${id}`, { method: "DELETE" });
 }
 
 export function sendMessage(conversationId, content) {

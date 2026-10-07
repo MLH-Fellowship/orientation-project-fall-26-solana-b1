@@ -22,3 +22,10 @@ class LLMProvider(ABC):
     def generate_reply_stream(self, history: list[dict[str, str]]) -> Iterator[str]:
         """Yield assistant response text chunks in generation order."""
         yield self.generate_reply(history)
+    @abstractmethod
+    def generate_title(self, user_message: str, assistant_message: str) -> str:
+        """
+        Given the first user message and the assistant's reply, return a
+        short (3–6 word) conversation title.
+        """
+        raise NotImplementedError

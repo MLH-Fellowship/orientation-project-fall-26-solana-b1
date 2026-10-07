@@ -80,9 +80,8 @@ button, input { padding: 0; font: inherit; color: inherit; }
 .empty { color: var(--ink-3); font-size: 13px; padding: 0 10px; margin: 0; white-space: normal; }
 
 .row {
-  display: flex; align-items: center; gap: 8px; width: 100%; height: 30px; padding: 0 10px;
-  border: 0; border-radius: 7px; background: none; text-align: left; font-size: 13.5px; 
-  color: var(--ink-2); /* Changed from #3a3a38 */
+  display: flex; align-items: center; width: 100%; height: 30px;
+  border: 0; border-radius: 7px; background: none; text-align: left; font-size: 13.5px; color: var(--ink-2);
   cursor: pointer; transition: background-color 60ms, opacity 120ms;
   animation: fade 160ms ease-out;
 }
@@ -94,7 +93,20 @@ button, input { padding: 0; font: inherit; color: inherit; }
 .row.active { background: var(--active); color: var(--ink); font-weight: 500; }
 .row.unread { color: var(--ink); font-weight: 500; }
 .row.dragging { opacity: 0.35; }
+.row-open { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; height: 100%; padding: 0 10px; border: 0; background: none; text-align: left; cursor: pointer; }
+.row-open:disabled { cursor: default; }
 .title { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+.row-actions { display: flex; align-items: center; gap: 1px; padding-right: 5px; opacity: 0; pointer-events: none; transition: opacity 80ms; }
+.row:hover .row-actions, .row:focus-within .row-actions, .row.active .row-actions { opacity: 1; pointer-events: auto; }
+.row-action { display: grid; place-items: center; width: 23px; height: 23px; border: 0; border-radius: 5px; background: none; color: var(--ink-3); cursor: pointer; }
+.row-action:hover { background: var(--surface); color: var(--ink); }
+.row-action.danger:hover { color: #b42318; }
+.row-action:disabled { opacity: 0.35; cursor: default; }
+
+.rename-form { flex: 1; min-width: 0; padding: 0 6px; }
+.rename-form input { width: 100%; height: 24px; padding: 0 5px; border: 0; border-radius: 5px; background: var(--surface); box-shadow: 0 0 0 1px var(--ink-3); outline: none; font-size: 13.5px; }
+.rename-form input[aria-invalid="true"] { box-shadow: 0 0 0 1px #b42318; }
 
 .over { background: rgba(28, 28, 27, 0.06); box-shadow: inset 0 0 0 1.5px rgba(28, 28, 27, 0.5); }
 
@@ -237,4 +249,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
   .scrim { display: block; position: fixed; inset: 0; z-index: 10; background: rgba(28, 28, 27, 0.25); animation: fade 200ms ease-out; }
   .chat-toggle { display: grid; }
   .chat { margin-top: 0; padding-top: 56px; border: 0; border-radius: 0; }
+}
+
+@media (hover: none) {
+  .row-actions { opacity: 1; pointer-events: auto; }
 }

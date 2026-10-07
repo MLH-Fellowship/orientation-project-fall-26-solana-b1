@@ -49,7 +49,7 @@ class Message(Base):
 
     id = Column(String, primary_key=True, default=_uuid)
     conversation_id = Column(
-        String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+        String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True
     )
     role = Column(String, nullable=False)  # "user" | "assistant"
     content = Column(Text, nullable=False)

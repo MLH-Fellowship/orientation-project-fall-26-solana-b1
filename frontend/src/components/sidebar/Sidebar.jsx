@@ -22,7 +22,9 @@ export default function Sidebar({
   failed,
   onOpen,
   onNew,
-  theme, // <-- Destructure theme
+  onRename,
+  onDelete,
+  theme,
   onToggleTheme,
 }) {
   const groups = useChatGroups();
@@ -58,6 +60,11 @@ export default function Sidebar({
         query={search.query}
         dragProps={groups.draggable(c.id, tooltip.hide)}
         onOpen={onOpen}
+        onRename={onRename}
+        onDelete={async (id) => {
+          await onDelete(id);
+          groups.remove(id);
+        }}
       />
     );
   }

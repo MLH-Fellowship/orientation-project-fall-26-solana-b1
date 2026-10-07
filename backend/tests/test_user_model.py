@@ -78,7 +78,8 @@ def test_unknown_user_rejected_with_foreign_keys_enabled(engine):
         session.rollback()
 
 
-def test_deleting_user_retains_conversation_and_messages(engine):
+@pytest.mark.parametrize("load_relationships", [False, True])
+def test_deleting_user_retains_conversation_and_messages(engine, load_relationships):
     with Session(engine) as session:
         user = User(email="alex@example.com")
         conversation = Conversation(user=user)
@@ -87,6 +88,8 @@ def test_deleting_user_retains_conversation_and_messages(engine):
         session.commit()
         conversation_id, message_id = conversation.id, message.id
         session.expire_all()
+        if load_relationships:
+            assert user.conversations == [conversation]
         session.delete(user)
         session.commit()
         assert session.get(Conversation, conversation_id).user_id is None
