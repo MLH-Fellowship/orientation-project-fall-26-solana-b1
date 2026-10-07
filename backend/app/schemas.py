@@ -55,6 +55,13 @@ class ConversationOut(BaseModel):
         from_attributes = True
 
 
+class ConversationListOut(BaseModel):
+    items: list[ConversationOut]
+    total: int
+    limit: int
+    offset: int
+
+
 class ConversationDetailOut(ConversationOut):
     messages: list[MessageOut] = []
 

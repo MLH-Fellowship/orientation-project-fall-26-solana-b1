@@ -3,10 +3,10 @@
 ## Stack
 
 - **Backend:** Python, FastAPI, SQLAlchemy, SQLite. Talks to an LLM
-  (Google Gemini by default) through a small pluggable provider interface.
+(Google Gemini by default) through a small pluggable provider interface.
 - **Frontend:** JavaScript, React, Vite (Node-based tooling).
 - **Communication:** Frontend calls the backend REST API (Vite dev
-  server proxies `/api` to `http://localhost:8000`).
+server proxies `/api` to `http://localhost:8000`).
 
 ## Project layout
 
@@ -29,6 +29,8 @@ frontend/
 scripts/dev.sh            # runs backend + frontend together
 ```
 
+
+
 ## Continuous integration
 
 Pull requests and pushes to `main` run two CI jobs: backend Ruff linting, Ruff
@@ -50,6 +52,8 @@ npm --prefix frontend run build
 To fix Python formatting, run `backend/.venv/bin/python -m ruff format backend`.
 
 ## Getting started
+
+
 
 ### Backend
 
@@ -132,6 +136,8 @@ alembic revision --autogenerate -m "describe the schema change"
 alembic downgrade -1
 ```
 
+
+
 ### Frontend
 
 The frontend requires Node.js 18 or newer. From the repository root,
@@ -156,6 +162,8 @@ cd frontend
 npm ci
 npm run dev
 ```
+
+
 
 ### Or run both at once
 
@@ -217,13 +225,15 @@ With the backend running, open [interactive API documentation](http://localhost:
 to inspect request/response schemas and try each endpoint. The raw OpenAPI schema is
 available at `http://localhost:8000/openapi.json`.
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/api/health` | Check that the application responds |
-| POST | `/api/conversations` | Create a conversation, e.g. `{"title": "Learning FastAPI"}` |
-| GET | `/api/conversations` | List conversations, newest first |
-| GET | `/api/conversations/{id}` | Read a conversation and its messages |
-| POST | `/api/conversations/{id}/messages` | Send `{"content": "Hello!"}` and receive the saved assistant reply |
+
+| Method | Path                               | Purpose                                                                                                                                         |
+| ------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`                      | Check that the application responds                                                                                                             |
+| POST   | `/api/conversations`               | Create a conversation, e.g. `{"title": "Learning FastAPI"}`                                                                                     |
+| GET    | `/api/conversations`               | List conversations newest first; returns `{ items, total, limit, offset }`. Query params: `limit` (1–100, default 20), `offset` (≥0, default 0) |
+| GET    | `/api/conversations/{id}`          | Read a conversation and its messages                                                                                                            |
+| POST   | `/api/conversations/{id}/messages` | Send `{"content": "Hello!"}` and receive the saved assistant reply                                                                              |
+
 
 Missing conversation IDs return HTTP 404; invalid request bodies return HTTP 422.
 Sending messages requires an LLM API key. Health checks and creating, listing,

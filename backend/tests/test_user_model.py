@@ -206,7 +206,7 @@ def test_chat_flow_after_migration(engine, monkeypatch):
             ]
             response = client.get("/api/conversations")
             assert response.status_code == 200
-            assert any(item["id"] == conversation_id for item in response.json())
+            assert any(item["id"] == conversation_id for item in response.json()["items"])
         provider.generate_reply.assert_called_once_with([{"role": "user", "content": "Hello"}])
         with sessions() as session:
             conversation = session.get(Conversation, conversation_id)
