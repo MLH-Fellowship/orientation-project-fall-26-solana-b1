@@ -57,7 +57,7 @@ def test_invalid_content_has_no_side_effects(api, payload):
     client, conversation_id, sessions, factory, _ = api
     response = client.post(f"/api/conversations/{conversation_id}/messages", json=payload)
     assert response.status_code == 422
-    assert any(error["loc"] == ["body", "content"] for error in response.json()["detail"])
+    assert any(error["loc"] == ["body", "content"] for error in response.json()["error"]["details"])
     factory.assert_not_called()
     with sessions() as session:
         assert session.query(Message).count() == 0

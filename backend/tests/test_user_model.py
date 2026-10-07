@@ -5,11 +5,11 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event, inspect, select
+from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.database import get_db
+from app.database import create_database_engine, get_db
 from app.main import app
 from app.routes import chat
 from app.models import Conversation, Message, User
@@ -29,11 +29,7 @@ def schema_columns(inspector, table):
 def engine(tmp_path):
     database_url = f"sqlite:///{tmp_path / 'users.db'}"
     command.upgrade(migration_config(database_url), "head")
-    bind = create_engine(database_url, connect_args={"check_same_thread": False})
-
-    @event.listens_for(bind, "connect")
-    def enable_foreign_keys(connection, _):
-        connection.execute("PRAGMA foreign_keys=ON")
+    bind = create_database_engine(database_url)
 
     try:
         yield bind
@@ -82,7 +78,8 @@ def test_unknown_user_rejected_with_foreign_keys_enabled(engine):
         session.rollback()
 
 
-def test_deleting_user_retains_conversation_and_messages(engine):
+@pytest.mark.parametrize("load_relationships", [False, True])
+def test_deleting_user_retains_conversation_and_messages(engine, load_relationships):
     with Session(engine) as session:
         user = User(email="alex@example.com")
         conversation = Conversation(user=user)
@@ -91,6 +88,8 @@ def test_deleting_user_retains_conversation_and_messages(engine):
         session.commit()
         conversation_id, message_id = conversation.id, message.id
         session.expire_all()
+        if load_relationships:
+            assert user.conversations == [conversation]
         session.delete(user)
         session.commit()
         assert session.get(Conversation, conversation_id).user_id is None

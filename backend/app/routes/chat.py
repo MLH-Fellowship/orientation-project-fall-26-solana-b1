@@ -16,10 +16,9 @@ from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
     ConversationOut,
-    ErrorOut,
+    ErrorResponse,
     MessageCreate,
     MessageOut,
-    ValidationErrorOut,
 )
 from app.utils.titles import DEFAULT_TITLE, resolve_title
 
@@ -55,7 +54,7 @@ def list_conversations(db: Session = Depends(get_db)):
     response_model=ConversationDetailOut,
     summary="Get a conversation with its messages",
     description="Look up a conversation by ID and return its saved messages.",
-    responses={404: {"model": ErrorOut, "description": "Conversation not found"}},
+    responses={404: {"model": ErrorResponse, "description": "Conversation not found"}},
 )
 def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
     convo = db.get(Conversation, conversation_id)
@@ -74,8 +73,8 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
         "return the assistant reply. Requires a configured LLM API key. "
     ),
     responses={
-        404: {"model": ErrorOut, "description": "Conversation not found"},
-        422: {"model": ValidationErrorOut, "description": "Invalid message content"},
+        404: {"model": ErrorResponse, "description": "Conversation not found"},
+        422: {"model": ErrorResponse, "description": "Invalid message content"},
     },
 )
 def send_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db)):
