@@ -42,8 +42,19 @@ ORM `Session.delete(user)`, SQLAlchemy clears associated conversations' `user_id
 The user foreign key has no database `ON DELETE` action. The existing
 conversation-to-message ORM `all, delete-orphan` cascade is unchanged.
 
-SQLite foreign-key enforcement is not enabled by the current application engine;
-declaring a foreign key alone does not enable it. Tests explicitly enable it when
-checking referential integrity. With enforcement enabled, direct SQL deletes must
-respect the foreign key; ORM deletion behavior does not apply to writes outside
-SQLAlchemy sessions.
+SQLite foreign-key enforcement is enabled on every application connection.
+Direct SQL deletion of a user with owned conversations is rejected; ORM deletion
+clears ownership first. Deleting a conversation directly cascades to its messages.
+
+Alembic disables enforcement only on its separate SQLite migration connection
+because batch table rebuilds would otherwise trigger cascading message deletion.
+It checks foreign-key integrity before and after migrations, using a transaction
+that rolls back schema and data changes on failure.
+
+Before deploying to an existing database, stop the backend, back up the database,
+and run `alembic upgrade head`, even if no schema revisions are pending. If invalid
+references exist, the command fails without changing the database. Inspect them
+with `PRAGMA foreign_key_check`. Repair each reference deliberately (for example,
+clear invalid optional ownership or restore the missing parent), then rerun the
+command. No rows are automatically deleted or repaired. Scripts outside the
+application must enable enforcement on their own SQLite connections.

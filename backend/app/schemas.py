@@ -1,9 +1,19 @@
 """Pydantic request/response schemas."""
 
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+    details: list[dict[str, Any]] | None = None
+
+
+class ErrorResponse(BaseModel):
+    error: ErrorDetail
 
 
 class MessageCreate(BaseModel):
