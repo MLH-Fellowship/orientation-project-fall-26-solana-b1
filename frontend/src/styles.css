@@ -174,14 +174,14 @@ button, input { padding: 0; font: inherit; color: inherit; }
 .scrim { display: none; }
 
 .composer { transition: border-color 120ms, box-shadow 120ms; display: flex; align-items: center; gap: 8px; width: 100%; max-width: 640px; margin: 16px auto 0; padding: 8px 8px 8px 18px; border: 1px solid var(--line); border-radius: 18px; }
-.composer input { flex: 1; min-width: 0; height: 32px; border: 0; outline: none; background: none; font-size: 14px; }
+.composer textarea { flex: 1; min-width: 0; height: 32px; resize: none; border: 0; outline: none; background: none; font: inherit; font-size: 14px; line-height: 32px; }
 .composer:focus-within { border-color: #d4d4d0; box-shadow: 0 1px 6px rgba(28, 28, 27, 0.06); }
 .composer button { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--ink); color: var(--surface); cursor: pointer; }
 .composer button:not(:disabled):active { transform: scale(0.92); }
 .composer button:disabled { opacity: 0.25; cursor: default; }
 
-button:focus-visible, input:focus-visible { outline: 2px solid var(--ink-3); outline-offset: 1px; }
-.composer input:focus-visible { outline: none; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink-3); outline-offset: 1px; }
+.composer textarea:focus-visible { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

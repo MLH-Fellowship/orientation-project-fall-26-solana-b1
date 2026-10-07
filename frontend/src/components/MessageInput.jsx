@@ -10,13 +10,20 @@ export default function MessageInput({ onSend, disabled, inputRef }) {
     setText("");
   }
 
+  function handleKeyDown(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }
+
   return (
     <div className="composer">
-      <input
+      <textarea
         ref={inputRef}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        onKeyDown={handleKeyDown}
         placeholder="Ask anything"
         disabled={disabled}
         autoFocus
