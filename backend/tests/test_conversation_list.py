@@ -66,7 +66,7 @@ def test_default_page_returns_all_and_correct_envelope(tmp_path):
 
         # newest first; tied pair ordered id DESC
         returned_ids = [item["id"] for item in body["items"]]
-        
+
         tied_ids_sorted = sorted([c2_id, c3_id], reverse=True)
         assert returned_ids == [*tied_ids_sorted, c1_id]
 
