@@ -9,7 +9,7 @@ delete, etc. are left as fellow issues -- see ISSUES.md.
 import json
 from collections.abc import Iterator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
@@ -20,6 +20,7 @@ from app.models import Conversation, Message
 from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
+    ConversationListOut,
     ConversationOut,
     ErrorResponse,
     MessageCreate,
@@ -46,12 +47,29 @@ def create_conversation(payload: ConversationCreate, db: Session = Depends(get_d
 
 @router.get(
     "",
-    response_model=list[ConversationOut],
+    response_model=ConversationListOut,
     summary="List conversations",
-    description="Return all conversations, newest first, without message bodies.",
+    description=(
+        "Return conversations newest first, without message bodies. "
+        "Supports limit/offset pagination. "
+        "Defaults: limit=20, offset=0. "
+        "limit is capped at 100."
+    ),
 )
-def list_conversations(db: Session = Depends(get_db)):
-    return db.query(Conversation).order_by(Conversation.created_at.desc()).all()
+def list_conversations(
+    db: Session = Depends(get_db),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> ConversationListOut:
+    total = db.query(Conversation).count()
+    items = (
+        db.query(Conversation)
+        .order_by(Conversation.created_at.desc(), Conversation.id.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return ConversationListOut(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.get(

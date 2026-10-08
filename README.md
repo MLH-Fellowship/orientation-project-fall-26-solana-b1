@@ -3,10 +3,10 @@
 ## Stack
 
 - **Backend:** Python, FastAPI, SQLAlchemy, SQLite. Talks to an LLM
-  (Google Gemini by default) through a small pluggable provider interface.
+(Google Gemini by default) through a small pluggable provider interface.
 - **Frontend:** JavaScript, React, Vite (Node-based tooling).
 - **Communication:** Frontend calls the backend REST API (Vite dev
-  server proxies `/api` to `http://localhost:8000`).
+server proxies `/api` to `http://localhost:8000`).
 
 ## Project layout
 
@@ -27,7 +27,10 @@ frontend/
     components/          # MessageList, MessageInput
     api/client.js         # fetch wrapper for backend API
 scripts/dev.sh            # runs backend + frontend together
+docker-compose.yml        # runs both services in development containers
 ```
+
+
 
 ## Continuous integration
 
@@ -50,6 +53,8 @@ npm --prefix frontend run build
 To fix Python formatting, run `backend/.venv/bin/python -m ruff format backend`.
 
 ## Getting started
+
+
 
 ### Backend
 
@@ -132,6 +137,8 @@ alembic revision --autogenerate -m "describe the schema change"
 alembic downgrade -1
 ```
 
+
+
 ### Frontend
 
 The frontend requires Node.js 18 or newer. From the repository root,
@@ -157,6 +164,8 @@ npm ci
 npm run dev
 ```
 
+
+
 ### Or run both at once
 
 One-time setup from the repository root (Python 3.10–3.13 and Node.js required):
@@ -176,34 +185,34 @@ Then start both servers with:
 ./scripts/dev.sh
 ```
 
-Honcho prefixes output with `backend` or `frontend`. Press Ctrl+C once to stop
-both servers and their child processes. If either server exits, Honcho stops the
-other too. A port already in use causes startup to fail instead of silently
-moving the frontend to a different port.
+### Run with Docker
 
-The script uses `backend/.venv/bin/python` without requiring activation and can
-be invoked by path from any directory. Set `BACKEND_PYTHON` to an absolute Python
-executable path if your environment lives elsewhere.
-
-By default, open `http://localhost:5173`; the API runs on port 8000. To run another
-instance without stopping one already running:
+Docker Compose builds both development containers, keeps the SQLite database in
+a named volume, and configures the Vite proxy to reach the backend container.
 
 ```bash
-BACKEND_PORT=8001 FRONTEND_PORT=5174 ./scripts/dev.sh
+GEMINI_API_KEY=your-key docker compose up --build
 ```
 
-The frontend proxy follows `BACKEND_PORT`. Set `BACKEND_URL` to override the
-full proxy target (for example, `http://backend:8000` inside Docker); it takes
-precedence over `BACKEND_PORT`. If you call the backend directly from
-a different frontend origin, also set `FRONTEND_ORIGIN` to that origin.
+Then visit `http://localhost:5173`. The backend API is also available at
+`http://localhost:8000`. Code changes under `backend/` and `frontend/` are
+mounted into their containers for development reloads. The API key is optional
+for the health and conversation endpoints, but generating an LLM response
+requires it.
+
+Stop both services with:
+
+```bash
+docker compose down
+```
 
 ## What's here vs. what's not
 
 This scaffold gives you: a working conversation + message data model, one
 endpoint to send a message and get an LLM reply, and a minimal React UI
 that can hold a single conversation. It deliberately has **no**
-authentication, streaming, pagination, or Docker setup -- those are the
-fellowship issues.
+authentication, streaming, pagination, multi-conversation UI, migrations,
+or production deployment configuration -- those are the fellowship issues.
 
 ## Contributing
 
@@ -217,14 +226,15 @@ With the backend running, open [interactive API documentation](http://localhost:
 to inspect request/response schemas and try each endpoint. The raw OpenAPI schema is
 available at `http://localhost:8000/openapi.json`.
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/api/health` | Check that the application responds |
-| POST | `/api/conversations` | Create a conversation, e.g. `{"title": "Learning FastAPI"}` |
-| GET | `/api/conversations` | List conversations, newest first |
-| GET | `/api/conversations/{id}` | Read a conversation and its messages |
-| POST | `/api/conversations/{id}/messages` | Send `{"content": "Hello!"}` and receive the saved assistant reply |
-| POST | `/api/conversations/{id}/messages/stream` | Send a message and receive the assistant reply as newline-delimited JSON chunks |
+
+| Method | Path                               | Purpose                                                                                                                                         |
+| ------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`                      | Check that the application responds                                                                                                             |
+| POST   | `/api/conversations`               | Create a conversation, e.g. `{"title": "Learning FastAPI"}`                                                                                     |
+| GET    | `/api/conversations`               | List conversations newest first; returns `{ items, total, limit, offset }`. Query params: `limit` (1–100, default 20), `offset` (≥0, default 0) |
+| GET    | `/api/conversations/{id}`          | Read a conversation and its messages                                                                                                            |
+| POST   | `/api/conversations/{id}/messages` | Send `{"content": "Hello!"}` and receive the saved assistant reply                                                                              |
+
 
 Missing conversation IDs return HTTP 404; invalid request bodies return HTTP 422.
 Sending messages requires an LLM API key. Health checks and creating, listing,
