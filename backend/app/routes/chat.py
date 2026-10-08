@@ -6,13 +6,15 @@ message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.llm import get_llm_provider
 from app.models import Conversation, Message
+from app.rate_limit import limiter
 from app.schemas import (
     ConversationCreate,
     ConversationDetailOut,
@@ -123,10 +125,18 @@ def get_usage(conversation_id: str, db: Session = Depends(get_db)):
     ),
     responses={
         404: {"model": ErrorResponse, "description": "Conversation not found"},
+        429: {"description": "Message rate limit exceeded"},
         422: {"model": ErrorResponse, "description": "Invalid message content"},
     },
 )
-def send_message(conversation_id: str, payload: MessageCreate, db: Session = Depends(get_db)):
+@limiter.limit(lambda: settings.message_rate_limit)
+def send_message(
+    conversation_id: str,
+    payload: MessageCreate,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     convo = db.get(Conversation, conversation_id)
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
