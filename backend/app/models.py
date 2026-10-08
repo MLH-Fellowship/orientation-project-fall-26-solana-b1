@@ -26,6 +26,7 @@ class User(Base):
 
     id = Column(String, primary_key=True, default=_uuid)
     email = Column(String, nullable=False, unique=True)
+    password_hash = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversations = relationship("Conversation", back_populates="user")

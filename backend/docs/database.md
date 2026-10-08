@@ -1,14 +1,15 @@
 # Database relationships
 
 `users` contains a UUID string primary key (`id`), required unique `email`,
-and `created_at`, using the existing Python UTC timestamp default convention.
+an optional `password_hash`, and `created_at`, using the existing Python UTC
+timestamp default convention. The password hash is optional only so existing
+users remain valid after the migration. New signup records always have a hash.
 Email format validation and normalization belong to the auth layer; the unique
 constraint alone does not guarantee case-insensitive email uniqueness.
 
 `conversations.user_id` is a nullable foreign key to `users.id`. Existing API
 requests continue to create unowned conversations. SQLAlchemy exposes ownership
-through `Conversation.user` and `User.conversations`. No password or auth
-endpoints are included.
+through `Conversation.user` and `User.conversations`.
 
 ## Relationship indexes
 
