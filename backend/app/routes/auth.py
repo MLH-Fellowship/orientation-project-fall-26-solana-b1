@@ -20,7 +20,6 @@ from app.schemas import AuthCredentials, SignupOut, TokenOut, UserOut
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 bearer_scheme = HTTPBearer(auto_error=False)
 password_hasher = PasswordHash.recommended()
-dummy_hash = password_hasher.hash("not-a-real-password")
 
 
 def unauthorized() -> HTTPException:
@@ -91,8 +90,9 @@ def signup(payload: AuthCredentials, db: Session = Depends(get_db)):
 )
 def login(payload: AuthCredentials, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(func.lower(User.email) == payload.email))
-    stored_hash = user.password_hash if user and user.password_hash else dummy_hash
-    if not password_hasher.verify(payload.password, stored_hash) or user is None:
+    if user is None or not user.password_hash:
+        raise unauthorized()
+    if not password_hasher.verify(payload.password, user.password_hash):
         raise unauthorized()
     return TokenOut(access_token=create_access_token(user))
 

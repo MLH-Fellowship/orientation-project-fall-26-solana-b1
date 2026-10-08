@@ -134,7 +134,7 @@ def test_user_without_password_cannot_log_in(auth_api):
         session.commit()
 
     response = client.post(
-        "/api/auth/login", json={"email": "old@example.com", "password": "strong-password"}
+        "/api/auth/login", json={"email": "old@example.com", "password": "not-a-real-password"}
     )
 
     assert response.status_code == 401
