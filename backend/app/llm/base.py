@@ -7,14 +7,22 @@ more providers (OpenAI, local/Ollama, etc.) behind this same interface
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+
+@dataclass
+class LLMReply:
+    text: str
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
 
 
 class LLMProvider(ABC):
     @abstractmethod
-    def generate_reply(self, history: list[dict]) -> str:
+    def generate_reply(self, history: list[dict]) -> LLMReply:
         """
         Given conversation history as a list of {"role": ..., "content": ...}
-        dicts, return the assistant's full text reply.
+        dicts, return the assistant's text and token counts.
         """
         raise NotImplementedError
 

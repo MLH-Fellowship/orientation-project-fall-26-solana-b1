@@ -41,7 +41,7 @@ CI uses Python 3.12 and Node.js 22 and does not require an LLM API key.
 Run the same checks locally from the repository root:
 
 ```bash
-backend/.venv/bin/python -m pip install -r backend/requirements-lint.txt
+backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt -r backend/requirements-lint.txt
 backend/.venv/bin/python -m ruff check backend
 backend/.venv/bin/python -m ruff format --check backend
 (cd backend && DATABASE_URL=sqlite:// .venv/bin/python -m pytest -q)
@@ -98,7 +98,7 @@ cd backend
 python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 cp .env.example .env
 # Set JWT_SECRET to a random value with at least 32 characters.
 # Add GEMINI_API_KEY for AI replies.
@@ -237,6 +237,7 @@ available at `http://localhost:8000/openapi.json`.
 | POST   | `/api/conversations`               | Create a conversation, e.g. `{"title": "Learning FastAPI"}`                                                                                     |
 | GET    | `/api/conversations`               | List conversations newest first; returns `{ items, total, limit, offset }`. Query params: `limit` (1–100, default 20), `offset` (≥0, default 0) |
 | GET    | `/api/conversations/{id}`          | Read a conversation and its messages                                                                                                            |
+| GET    | `/api/conversations/{id}/usage`    | Read the saved prompt, completion, and total token counts                                                                                       |
 | POST   | `/api/conversations/{id}/messages` | Send `{"content": "Hello!"}` and receive the saved assistant reply                                                                              |
 
 
@@ -251,3 +252,84 @@ Message content must be a string containing 1–10,000 characters after surround
 whitespace is removed. Interior spaces and line breaks are preserved. Invalid
 payloads return HTTP 422 with validation details, without saving a message or
 calling the LLM.
+
+## Token usage
+
+Apply the database migration before you start an existing installation:
+
+```bash
+make backend-migrate
+```
+
+Each assistant message stores the token counts from its Gemini response:
+
+- `prompt_tokens`: Gemini `usageMetadata.promptTokenCount`. This includes the
+  conversation history sent with the request.
+- `completion_tokens`: Gemini `usageMetadata.candidatesTokenCount`.
+
+Message responses include both fields. Old messages, user messages, and missing
+counts use `null`. The app does not estimate unknown counts. Title requests are
+excluded.
+
+`GET /api/conversations/{id}/usage` returns the sum of the saved counts:
+
+```json
+{
+  "conversation_id": "example-id",
+  "prompt_tokens": 120,
+  "completion_tokens": 40,
+  "total_tokens": 160
+}
+```
+
+The summary treats `null` as zero. An empty conversation has zero totals.
+An unknown conversation ID returns HTTP 404. `total_tokens` is the sum of the
+two stored counts. It is not Gemini's `totalTokenCount`, which can include
+other token categories, such as thinking tokens.
+
+Google defines these fields in its
+[GenerateContentResponse API schema](https://github.com/googleapis/googleapis/blob/master/google/ai/generativelanguage/v1beta/generative_service.proto).
+The pinned
+[google-genai 0.7.0 SDK](https://github.com/googleapis/python-genai/blob/v0.7.0/google/genai/types.py)
+exposes them under `response.usage_metadata` as `prompt_token_count` and
+`candidates_token_count`.
+
+### Integration tests: reviewer notes
+
+The tests use [`responses`](https://github.com/getsentry/responses), an HTTP
+interceptor similar to Nock for JavaScript. The pinned Gemini SDK sends HTTP
+requests through Python `requests`. `responses` supplies the JSON responses at
+this boundary. The API routes, Gemini provider, SDK response parser, and SQLite
+database run as real code. The tests do not replace the provider or SDK with
+mocks or fakes.
+
+`backend/tests/conftest.py` contains the shared test setup:
+
+- `gemini_http` intercepts HTTP requests and rejects unregistered requests.
+  It sets a test API key and model. No Google server is contacted.
+- `gemini_response` supplies small JSON responses in the documented Gemini
+  format. These responses are written for the tests, not captured from live
+  Gemini calls. The tests check the outgoing HTTP request bodies.
+- `migrated_api` applies Alembic migrations to a temporary SQLite file and
+  uses that database for API requests.
+
+The usage tests are in `backend/tests/test_token_usage.py`. They check saved
+counts, conversation totals, missing and zero counts, HTTP 404, title exclusion,
+failed requests, and migration upgrade and downgrade. Related message and title
+tests also use intercepted HTTP responses.
+
+From the repository root, install the test dependencies:
+
+```bash
+backend/.venv/bin/python -m pip install -r backend/requirements-dev.txt
+```
+
+Then run the usage tests from `backend/`:
+
+```bash
+DATABASE_URL=sqlite:// .venv/bin/python -m pytest tests/test_token_usage.py -q
+```
+
+Run all backend tests with `make backend-test`. CI installs the same test
+dependencies. These tests need no real Gemini API key. They check local
+integration and the documented response format, not the live Google service.

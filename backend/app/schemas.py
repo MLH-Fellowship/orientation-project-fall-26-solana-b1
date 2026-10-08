@@ -59,6 +59,8 @@ class MessageOut(BaseModel):
     id: str
     role: str = Field(examples=["assistant"])
     content: str = Field(examples=["Conversations are stored in SQLite."])
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
     created_at: datetime
 
     class Config:
@@ -91,6 +93,13 @@ class ConversationListOut(BaseModel):
 
 class ConversationDetailOut(ConversationOut):
     messages: list[MessageOut] = []
+
+
+class ConversationUsageOut(BaseModel):
+    conversation_id: str
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
 
 
 class HealthOut(BaseModel):

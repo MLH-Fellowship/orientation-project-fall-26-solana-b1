@@ -13,7 +13,7 @@ check-backend-python:
 backend-install: check-backend-python
 	$(PYTHON) -m venv $(BACKEND_VENV)
 	$(BACKEND_PYTHON) -m pip install --upgrade pip
-	$(BACKEND_PYTHON) -m pip install -r $(BACKEND_DIR)/requirements.txt
+	$(BACKEND_PYTHON) -m pip install -r $(BACKEND_DIR)/requirements-dev.txt
 	@test -f $(BACKEND_DIR)/.env || cp $(BACKEND_DIR)/.env.example $(BACKEND_DIR)/.env
 
 backend-migrate:

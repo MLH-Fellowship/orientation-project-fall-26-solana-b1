@@ -16,6 +16,7 @@ def test_openapi_documents_routes_and_payloads():
         ("/api/conversations", "get"),
         ("/api/conversations", "post"),
         ("/api/conversations/{conversation_id}", "get"),
+        ("/api/conversations/{conversation_id}/usage", "get"),
         ("/api/conversations/{conversation_id}/messages", "post"),
     ]
     for path, method in routes:
@@ -30,6 +31,7 @@ def test_openapi_documents_routes_and_payloads():
     assert models["MessageOut"]["properties"]["content"]["examples"]
     for path, method in [
         ("/api/conversations/{conversation_id}", "get"),
+        ("/api/conversations/{conversation_id}/usage", "get"),
         ("/api/conversations/{conversation_id}/messages", "post"),
     ]:
         assert "404" in schema["paths"][path][method]["responses"]

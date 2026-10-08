@@ -28,6 +28,8 @@ def test_initial_migration_upgrades_and_downgrades(tmp_path):
         "conversation_id",
         "role",
         "content",
+        "prompt_tokens",
+        "completion_tokens",
         "created_at",
     }
     password_column = next(
