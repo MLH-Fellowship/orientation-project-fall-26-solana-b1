@@ -4,6 +4,8 @@ Uses the free-tier-eligible Gemini API. Get a key at
 https://aistudio.google.com/apikey
 """
 
+from collections.abc import Iterator
+
 from google import genai
 from google.genai import types
 
@@ -37,6 +39,27 @@ class GeminiProvider(LLMProvider):
         )
         return response.text
 
+    def generate_reply_stream(self, history: list[dict]) -> Iterator[str]:
+        contents = [
+            types.Content(
+                role="model" if m["role"] == "assistant" else "user",
+                parts=[types.Part(text=m["content"])],
+            )
+            for m in history
+        ]
+
+        response = self.client.models.generate_content_stream(
+            model=settings.gemini_model,
+            contents=contents,
+            config=(
+                types.GenerateContentConfig(system_instruction=settings.system_prompt)
+                if settings.system_prompt
+                else None
+            ),
+        )
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text
     def generate_title(self, user_message: str, assistant_message: str) -> str:
         prompt = (
             "Generate a short conversation title of 3–6 words based on the exchange below. "

@@ -6,8 +6,13 @@ message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
 
+import json
+from collections.abc import Iterator
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
 
 from app.database import get_db
 from app.llm import get_llm_provider
@@ -110,3 +115,63 @@ def send_message(conversation_id: str, payload: MessageCreate, db: Session = Dep
 
     db.refresh(assistant_msg)
     return assistant_msg
+
+
+@router.post(
+    "/{conversation_id}/messages/stream",
+    summary="Stream an assistant reply",
+    description="Save a user message and stream the assistant reply as newline-delimited JSON.",
+    responses={
+        404: {"model": ErrorResponse, "description": "Conversation not found"},
+        422: {"model": ErrorResponse, "description": "Invalid message content"},
+    },
+)
+def stream_message(
+    conversation_id: str,
+    payload: MessageCreate,
+    db: Session = Depends(get_db),
+):
+    if not db.get(Conversation, conversation_id):
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    stream_session_factory = sessionmaker(autoflush=False, bind=db.get_bind())
+
+    def events() -> Iterator[str]:
+        stream_db = stream_session_factory()
+        reply_parts: list[str] = []
+        try:
+            convo = stream_db.get(Conversation, conversation_id)
+            user_msg = Message(
+                conversation_id=conversation_id, role="user", content=payload.content
+            )
+            stream_db.add(user_msg)
+            stream_db.flush()
+            history = [{"role": m.role, "content": m.content} for m in convo.messages]
+
+            for chunk in get_llm_provider().generate_reply_stream(history):
+                reply_parts.append(chunk)
+                yield json.dumps({"type": "chunk", "text": chunk}) + "\n"
+
+            assistant_msg = Message(
+                conversation_id=conversation_id,
+                role="assistant",
+                content="".join(reply_parts),
+            )
+            stream_db.add(assistant_msg)
+            stream_db.commit()
+            yield (
+                json.dumps(
+                    {
+                        "type": "done",
+                        "message": MessageOut.model_validate(assistant_msg).model_dump(mode="json"),
+                    }
+                )
+                + "\n"
+            )
+        except Exception as exc:
+            stream_db.rollback()
+            yield json.dumps({"type": "error", "message": str(exc)}) + "\n"
+        finally:
+            stream_db.close()
+
+    return StreamingResponse(events(), media_type="application/x-ndjson")

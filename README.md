@@ -224,11 +224,15 @@ available at `http://localhost:8000/openapi.json`.
 | GET | `/api/conversations` | List conversations, newest first |
 | GET | `/api/conversations/{id}` | Read a conversation and its messages |
 | POST | `/api/conversations/{id}/messages` | Send `{"content": "Hello!"}` and receive the saved assistant reply |
+| POST | `/api/conversations/{id}/messages/stream` | Send a message and receive the assistant reply as newline-delimited JSON chunks |
 
 Missing conversation IDs return HTTP 404; invalid request bodies return HTTP 422.
 Sending messages requires an LLM API key. Health checks and creating, listing,
 or reading conversations do not. The send endpoint returns the saved assistant
 message; read the conversation again to retrieve the complete message history.
+The streaming endpoint emits `chunk` events as the LLM generates text and
+finishes with a `done` event containing the saved message. If generation fails,
+it emits an `error` event and does not save either message.
 
 ## Message validation
 
