@@ -9,7 +9,6 @@ from alembic.config import Config
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 
-
 os.environ.setdefault("JWT_SECRET", "integration-test-secret-at-least-32-characters")
 
 
@@ -71,3 +70,12 @@ def migrated_api(tmp_path):
         app.dependency_overrides.clear()
         app.dependency_overrides.update(previous)
         engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    from app.rate_limit import limiter
+
+    limiter.reset()
+    yield
+    limiter.reset()

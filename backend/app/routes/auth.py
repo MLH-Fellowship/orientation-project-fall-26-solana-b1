@@ -35,6 +35,16 @@ def create_access_token(user: User) -> str:
     return jwt.encode({"sub": user.id, "exp": expires_at}, settings.jwt_secret, algorithm="HS256")
 
 
+def decode_access_token(token: str) -> str:
+    payload = jwt.decode(
+        token,
+        settings.jwt_secret,
+        algorithms=["HS256"],
+        options={"require": ["sub", "exp"]},
+    )
+    return payload["sub"]
+
+
 def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     db: Session = Depends(get_db),
@@ -42,14 +52,8 @@ def get_current_user(
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise unauthorized()
     try:
-        payload = jwt.decode(
-            credentials.credentials,
-            settings.jwt_secret,
-            algorithms=["HS256"],
-            options={"require": ["sub", "exp"]},
-        )
-        user = db.get(User, payload["sub"])
-    except (InvalidTokenError, TypeError):
+        user = db.get(User, decode_access_token(credentials.credentials))
+    except (InvalidTokenError, KeyError, TypeError):
         raise unauthorized() from None
     if user is None:
         raise unauthorized()
