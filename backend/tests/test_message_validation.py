@@ -1,43 +1,15 @@
-from unittest.mock import Mock
+import json
 
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from app.database import Base, get_db
-from app.main import app
 from app.models import Message
-from app.routes import chat
 
 
 @pytest.fixture
-def api(tmp_path, monkeypatch):
-    engine = create_engine(
-        f"sqlite:///{tmp_path / 'test.db'}", connect_args={"check_same_thread": False}
-    )
-    Base.metadata.create_all(engine)
-    sessions = sessionmaker(bind=engine)
-
-    def override_db():
-        with sessions() as session:
-            yield session
-
-    provider = Mock()
-    provider.generate_reply.return_value = "Mock reply"
-    factory = Mock(return_value=provider)
-    monkeypatch.setattr(chat, "get_llm_provider", factory)
-    previous = app.dependency_overrides.copy()
-    app.dependency_overrides[get_db] = override_db
-    try:
-        with TestClient(app) as client:
-            response = client.post("/api/conversations", json={"title": "Test"})
-            assert response.status_code == 200
-            yield client, response.json()["id"], sessions, factory, provider
-    finally:
-        app.dependency_overrides.clear()
-        app.dependency_overrides.update(previous)
-        engine.dispose()
+def api(migrated_api, gemini_http):
+    client, sessions = migrated_api
+    response = client.post("/api/conversations", json={"title": "Test"})
+    assert response.status_code == 200
+    return client, response.json()["id"], sessions, gemini_http
 
 
 @pytest.mark.parametrize(
@@ -54,11 +26,11 @@ def api(tmp_path, monkeypatch):
     ],
 )
 def test_invalid_content_has_no_side_effects(api, payload):
-    client, conversation_id, sessions, factory, _ = api
+    client, conversation_id, sessions, interceptor = api
     response = client.post(f"/api/conversations/{conversation_id}/messages", json=payload)
     assert response.status_code == 422
     assert any(error["loc"] == ["body", "content"] for error in response.json()["error"]["details"])
-    factory.assert_not_called()
+    assert len(interceptor.calls) == 0
     with sessions() as session:
         assert session.query(Message).count() == 0
 
@@ -73,14 +45,18 @@ def test_invalid_content_has_no_side_effects(api, payload):
         ("  Hello 🌍  ", "Hello 🌍"),
     ],
 )
-def test_valid_content_is_trimmed_saved_and_sent_to_llm(api, content, expected):
-    client, conversation_id, sessions, _, provider = api
+def test_valid_content_is_trimmed_saved_and_sent_to_llm(api, content, expected, gemini_response):
+    client, conversation_id, sessions, _ = api
+    route = gemini_response()
     response = client.post(
         f"/api/conversations/{conversation_id}/messages", json={"content": content}
     )
     assert response.status_code == 200
-    assert response.json()["content"] == "Mock reply"
-    provider.generate_reply.assert_called_once_with([{"role": "user", "content": expected}])
+    assert response.json()["content"] == "A test reply"
+    assert route.call_count == 1
+    assert json.loads(route.calls[0].request.body)["contents"] == [
+        {"role": "user", "parts": [{"text": expected}]}
+    ]
     with sessions() as session:
         messages = session.query(Message).all()
         assert len(messages) == 2

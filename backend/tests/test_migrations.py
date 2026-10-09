@@ -28,8 +28,14 @@ def test_initial_migration_upgrades_and_downgrades(tmp_path):
         "conversation_id",
         "role",
         "content",
+        "prompt_tokens",
+        "completion_tokens",
         "created_at",
     }
+    password_column = next(
+        column for column in inspector.get_columns("users") if column["name"] == "password_hash"
+    )
+    assert password_column["nullable"]
     foreign_key = inspector.get_foreign_keys("messages")[0]
     assert foreign_key["referred_table"] == "conversations"
     assert foreign_key["options"]["ondelete"] == "CASCADE"
@@ -55,4 +61,9 @@ def test_initial_migration_upgrades_and_downgrades(tmp_path):
 
 def test_settings_reject_empty_database_url():
     with pytest.raises(ValidationError, match="DATABASE_URL must not be empty"):
-        Settings(database_url="")
+        Settings(database_url="", jwt_secret="a" * 32)
+
+
+def test_settings_reject_short_jwt_secret():
+    with pytest.raises(ValidationError, match="at least 32 characters"):
+        Settings(jwt_secret="short")

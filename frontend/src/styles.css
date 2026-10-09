@@ -266,7 +266,6 @@ button, input { padding: 0; font: inherit; color: inherit; }
   border-color: var(--ink-3); /* Changed from #d4d4d0 */
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2); 
 }
->>>>>>> ad025f72ea46c08c4255a7a1768c55b033b50fde
 .composer button { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--ink); color: var(--surface); cursor: pointer; }
 .composer button:not(:disabled):active { transform: scale(0.92); }
 .composer button:disabled { opacity: 0.25; cursor: default; }

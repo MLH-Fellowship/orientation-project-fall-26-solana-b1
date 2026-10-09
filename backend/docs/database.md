@@ -1,14 +1,27 @@
 # Database relationships
 
 `users` contains a UUID string primary key (`id`), required unique `email`,
-and `created_at`, using the existing Python UTC timestamp default convention.
+an optional `password_hash`, and `created_at`, using the existing Python UTC
+timestamp default convention. The password hash is optional only so existing
+users remain valid after the migration. New signup records always have a hash.
 Email format validation and normalization belong to the auth layer; the unique
 constraint alone does not guarantee case-insensitive email uniqueness.
 
 `conversations.user_id` is a nullable foreign key to `users.id`. Existing API
 requests continue to create unowned conversations. SQLAlchemy exposes ownership
-through `Conversation.user` and `User.conversations`. No password or auth
-endpoints are included.
+through `Conversation.user` and `User.conversations`.
+
+## Message token counts
+
+Revision `20261008_0005` adds nullable integer columns `messages.prompt_tokens`
+and `messages.completion_tokens`. Existing rows keep their data and get `NULL`
+counts. Assistant messages store counts from Gemini usage data. User messages
+and unknown counts keep `NULL` values. Conversation usage totals treat `NULL`
+as zero and exclude title requests.
+
+Run `alembic upgrade head` from `backend/` to apply the change. Run
+`alembic downgrade 20261008_0004` to remove the token columns. The downgrade
+retains messages but removes their token counts.
 
 ## Relationship indexes
 

@@ -6,6 +6,7 @@ services:
       DATABASE_URL: sqlite:////data/app.db
       FRONTEND_ORIGIN: http://localhost:5173
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET to at least 32 characters}
     ports:
       - "8000:8000"
     volumes:

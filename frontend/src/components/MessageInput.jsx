@@ -19,7 +19,6 @@ export default function MessageInput({ onSend, disabled, inputRef }) {
   }
 
   function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
     // Shift+Enter inserts a newline; skip Enter while an IME is composing (e.g. Japanese input).
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
@@ -44,4 +43,4 @@ export default function MessageInput({ onSend, disabled, inputRef }) {
       </button>
     </div>
   );
-}}
+}

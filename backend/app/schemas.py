@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
 
 
 class ErrorDetail(BaseModel):
@@ -14,6 +14,33 @@ class ErrorDetail(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: ErrorDetail
+
+
+class AuthCredentials(BaseModel):
+    email: EmailStr
+    password: Annotated[str, StringConstraints(min_length=8, max_length=128)]
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: EmailStr) -> str:
+        return str(value).lower()
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"
+
+
+class SignupOut(BaseModel):
+    message: Literal["Signup successful"] = "Signup successful"
+
+
+class UserOut(BaseModel):
+    id: str
+    email: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MessageCreate(BaseModel):
@@ -32,6 +59,8 @@ class MessageOut(BaseModel):
     id: str
     role: str = Field(examples=["assistant"])
     content: str = Field(examples=["Conversations are stored in SQLite."])
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
     created_at: datetime
 
     class Config:
@@ -44,6 +73,10 @@ class ConversationCreate(BaseModel):
         description="Optional title; defaults to New Conversation.",
         examples=["Learning FastAPI"],
     )
+
+
+class ConversationUpdate(BaseModel):
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 
 
 class ConversationOut(BaseModel):
@@ -64,6 +97,13 @@ class ConversationListOut(BaseModel):
 
 class ConversationDetailOut(ConversationOut):
     messages: list[MessageOut] = []
+
+
+class ConversationUsageOut(BaseModel):
+    conversation_id: str
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
 
 
 class HealthOut(BaseModel):
