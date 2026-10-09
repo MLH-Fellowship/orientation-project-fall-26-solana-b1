@@ -6,7 +6,7 @@ import {
   getConversation,
   listConversations,
   renameConversation as renameConversationRequest,
-  sendMessage,
+  streamMessage,
 } from "../api/client.js";
 
 function without(set, item) {
@@ -122,7 +122,24 @@ export default function useChat() {
           setActiveId(key);
         }
       }
-      const reply = await sendMessage(key, text);
+      if (activeRef.current === key) {
+        setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
+      }
+      let reply;
+      for await (const event of streamMessage(key, text)) {
+        if (event.type === "error") throw new Error(event.message);
+        if (event.type === "chunk") {
+          setMessages((prev) => {
+            const next = [...prev];
+            const last = next[next.length - 1];
+            if (activeRef.current === key && last?.role === "assistant" && last.streaming) {
+              next[next.length - 1] = { ...last, content: last.content + event.text };
+            }
+            return next;
+          });
+        }
+        if (event.type === "done") reply = event.message;
+      }
       if (isNew) {
         try {
           const full = await getConversation(key);
@@ -131,10 +148,16 @@ export default function useChat() {
           // The reply is saved. The row keeps "New Conversation" until the next reload.
         }
       }
-      if (activeRef.current === key) setMessages((prev) => [...prev, reply]);
+      if (activeRef.current === key) {
+        setMessages((prev) => {
+          const next = [...prev];
+          if (reply) next[next.length - 1] = reply;
+          return next;
+        });
+      }
       else setUnread((s) => new Set(s).add(key));
     } catch {
-      if ((activeRef.current ?? "new") === key) setMessages((prev) => prev.slice(0, -1));
+      if ((activeRef.current ?? "new") === key) setMessages((prev) => prev.slice(0, -2));
       setFailed((f) => ({ ...f, [key]: [...(f[key] ?? []), text] }));
     } finally {
       setPending((s) => without(s, key));
