@@ -25,6 +25,7 @@ __pycache__/
 .venv/
 backend/app.db
 app.db
+*.db
 
 # Environment files
 .env
@@ -32,3 +33,6 @@ app.db
 # Node/Vite
 node_modules/
 dist/
+
+# Tooling
+.codegraph/

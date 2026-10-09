@@ -6,6 +6,8 @@ message, and get an LLM reply back. Pagination, streaming, rename,
 delete, etc. are left as fellow issues -- see ISSUES.md.
 """
 
+from uuid import UUID
+
 from sqlalchemy import func
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
@@ -20,6 +22,7 @@ from app.schemas import (
     ConversationDetailOut,
     ConversationListOut,
     ConversationOut,
+    ConversationUpdate,
     ConversationUsageOut,
     ErrorResponse,
     MessageCreate,
@@ -112,6 +115,48 @@ def get_usage(conversation_id: str, db: Session = Depends(get_db)):
         completion_tokens=completion_tokens,
         total_tokens=prompt_tokens + completion_tokens,
     )
+
+
+@router.patch(
+    "/{conversation_id}",
+    response_model=ConversationOut,
+    summary="Rename a conversation",
+    description="Update a conversation's title. The title is trimmed and must be 1-200 characters.",
+    responses={
+        404: {"model": ErrorResponse, "description": "Conversation not found"},
+        422: {"model": ErrorResponse, "description": "Invalid conversation ID or title"},
+    },
+)
+def rename_conversation(
+    conversation_id: UUID,
+    payload: ConversationUpdate,
+    db: Session = Depends(get_db),
+):
+    convo = db.get(Conversation, str(conversation_id))
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    convo.title = payload.title
+    db.commit()
+    db.refresh(convo)
+    return convo
+
+
+@router.delete(
+    "/{conversation_id}",
+    status_code=204,
+    summary="Delete a conversation",
+    description="Delete a conversation and all of its messages.",
+    responses={
+        404: {"model": ErrorResponse, "description": "Conversation not found"},
+        422: {"model": ErrorResponse, "description": "Invalid conversation ID"},
+    },
+)
+def delete_conversation(conversation_id: UUID, db: Session = Depends(get_db)):
+    convo = db.get(Conversation, str(conversation_id))
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    db.delete(convo)  # cascades to messages via the ORM relationship
+    db.commit()
 
 
 @router.post(

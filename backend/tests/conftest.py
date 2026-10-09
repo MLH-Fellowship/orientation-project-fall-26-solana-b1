@@ -7,7 +7,10 @@ from responses.registries import OrderedRegistry
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
 
 os.environ.setdefault("JWT_SECRET", "integration-test-secret-at-least-32-characters")
 
@@ -79,3 +82,45 @@ def reset_rate_limiter():
     limiter.reset()
     yield
     limiter.reset()
+
+
+class FakeProvider:
+    """Stands in for an LLMProvider so tests never call a real API."""
+
+    def generate_reply(self, history: list[dict]):
+        from app.llm.base import LLMReply
+
+        return LLMReply(text=f"echo: {history[-1]['content']}")
+
+    def generate_title(self, user_message: str, assistant_message: str) -> str:
+        return "Test title"
+
+
+@pytest.fixture
+def client(monkeypatch):
+    """TestClient backed by a temporary in-memory SQLite DB and a fake LLM."""
+    from app.database import Base, get_db
+    from app.main import app
+    from app.routes import chat
+
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    def override_get_db():
+        db = Session()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    previous = app.dependency_overrides.copy()
+    app.dependency_overrides[get_db] = override_get_db
+    monkeypatch.setattr(chat, "get_llm_provider", lambda: FakeProvider())
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+    app.dependency_overrides.update(previous)
