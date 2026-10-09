@@ -7,6 +7,7 @@ delete, etc. are left as fellow issues -- see ISSUES.md.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -17,6 +18,7 @@ from app.schemas import (
     ConversationDetailOut,
     ConversationListOut,
     ConversationOut,
+    ConversationUsageOut,
     ErrorResponse,
     MessageCreate,
     MessageOut,
@@ -81,6 +83,35 @@ def get_conversation(conversation_id: str, db: Session = Depends(get_db)):
     return convo
 
 
+@router.get(
+    "/{conversation_id}/usage",
+    response_model=ConversationUsageOut,
+    summary="Get conversation token usage",
+    description=(
+        "Return the saved prompt and completion token totals. "
+        "Unknown counts are treated as zero. Title requests are excluded."
+    ),
+    responses={404: {"model": ErrorResponse, "description": "Conversation not found"}},
+)
+def get_usage(conversation_id: str, db: Session = Depends(get_db)):
+    if db.get(Conversation, conversation_id) is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    prompt_tokens, completion_tokens = (
+        db.query(
+            func.coalesce(func.sum(Message.prompt_tokens), 0),
+            func.coalesce(func.sum(Message.completion_tokens), 0),
+        )
+        .filter(Message.conversation_id == conversation_id)
+        .one()
+    )
+    return ConversationUsageOut(
+        conversation_id=conversation_id,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=prompt_tokens + completion_tokens,
+    )
+
+
 @router.post(
     "/{conversation_id}/messages",
     response_model=MessageOut,
@@ -112,17 +143,23 @@ def send_message(conversation_id: str, payload: MessageCreate, db: Session = Dep
     history = [{"role": m.role, "content": m.content} for m in convo.messages]
 
     llm = get_llm_provider()
-    reply_text = llm.generate_reply(history)
+    reply = llm.generate_reply(history)
 
-    assistant_msg = Message(conversation_id=conversation_id, role="assistant", content=reply_text)
+    assistant_msg = Message(
+        conversation_id=conversation_id,
+        role="assistant",
+        content=reply.text,
+        prompt_tokens=reply.prompt_tokens,
+        completion_tokens=reply.completion_tokens,
+    )
     db.add(assistant_msg)
     db.commit()
 
     if is_first_exchange and convo.title == DEFAULT_TITLE:
         convo.title = resolve_title(
             payload.content,
-            reply_text,
-            lambda: llm.generate_title(payload.content, reply_text),
+            reply.text,
+            lambda: llm.generate_title(payload.content, reply.text),
         )
         db.commit()
 

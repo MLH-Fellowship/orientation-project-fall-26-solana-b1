@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+import json
 
 import pytest
 
@@ -6,27 +6,18 @@ from app.config import settings
 from app.llm.gemini_provider import GeminiProvider
 
 
-@pytest.mark.parametrize(
-    ("system_prompt", "expected_instruction"),
-    [
-        ("", None),
-        ("Answer as a Solana mentor.", "Answer as a Solana mentor."),
-    ],
-)
-def test_generate_reply_passes_optional_system_prompt(
-    monkeypatch, system_prompt, expected_instruction
-):
-    client = Mock()
-    client.models.generate_content.return_value.text = "A test reply"
-    monkeypatch.setattr("app.llm.gemini_provider.genai.Client", lambda **_: client)
+@pytest.mark.parametrize("system_prompt", ["", "Answer as a Solana mentor."])
+def test_generate_reply_passes_optional_system_prompt(monkeypatch, system_prompt, gemini_response):
+    route = gemini_response()
     monkeypatch.setattr(settings, "system_prompt", system_prompt)
 
-    provider = GeminiProvider()
-    result = provider.generate_reply([{"role": "user", "content": "Hello"}])
+    result = GeminiProvider().generate_reply([{"role": "user", "content": "Hello"}])
 
-    assert result == "A test reply"
-    config = client.models.generate_content.call_args.kwargs["config"]
-    if expected_instruction is None:
-        assert config is None
+    assert result.text == "A test reply"
+    assert route.call_count == 1
+    body = json.loads(route.calls[0].request.body)
+    assert body["contents"] == [{"role": "user", "parts": [{"text": "Hello"}]}]
+    if system_prompt:
+        assert body["systemInstruction"]["parts"] == [{"text": system_prompt}]
     else:
-        assert config.system_instruction == expected_instruction
+        assert "systemInstruction" not in body

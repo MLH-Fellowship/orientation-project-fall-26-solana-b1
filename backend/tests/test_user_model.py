@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import Mock
+import json
 
 import pytest
 from alembic import command
@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.database import create_database_engine, get_db
 from app.main import app
-from app.routes import chat
 from app.models import Conversation, Message, User
 
 
@@ -123,7 +122,11 @@ def test_upgrade_preserves_data_and_can_be_repeated(tmp_path):
             for column in schema_columns(migrated, "conversations")
             if column["name"] != "user_id"
         ] == conversation_columns
-        assert schema_columns(migrated, "messages") == message_columns
+        assert [
+            column
+            for column in schema_columns(migrated, "messages")
+            if column["name"] not in {"prompt_tokens", "completion_tokens"}
+        ] == message_columns
         assert migrated.get_foreign_keys("messages") == message_foreign_keys
         with engine.connect() as connection:
             assert connection.exec_driver_sql("PRAGMA foreign_key_check").all() == []
@@ -176,16 +179,14 @@ def test_upgrade_preserves_data_and_can_be_repeated(tmp_path):
         engine.dispose()
 
 
-def test_chat_flow_after_migration(engine, monkeypatch):
+def test_chat_flow_after_migration(engine, gemini_response):
     sessions = sessionmaker(bind=engine)
 
     def override_db():
         with sessions() as session:
             yield session
 
-    provider = Mock()
-    provider.generate_reply.return_value = "Hello back"
-    monkeypatch.setattr(chat, "get_llm_provider", lambda: provider)
+    route = gemini_response("Hello back")
     previous = app.dependency_overrides.copy()
     app.dependency_overrides[get_db] = override_db
     try:
@@ -207,7 +208,10 @@ def test_chat_flow_after_migration(engine, monkeypatch):
             response = client.get("/api/conversations")
             assert response.status_code == 200
             assert any(item["id"] == conversation_id for item in response.json()["items"])
-        provider.generate_reply.assert_called_once_with([{"role": "user", "content": "Hello"}])
+        assert route.call_count == 1
+        assert json.loads(route.calls[0].request.body)["contents"] == [
+            {"role": "user", "parts": [{"text": "Hello"}]}
+        ]
         with sessions() as session:
             conversation = session.get(Conversation, conversation_id)
             assert conversation.user_id is None

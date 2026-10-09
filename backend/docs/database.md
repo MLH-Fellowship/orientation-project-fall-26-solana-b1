@@ -11,6 +11,18 @@ constraint alone does not guarantee case-insensitive email uniqueness.
 requests continue to create unowned conversations. SQLAlchemy exposes ownership
 through `Conversation.user` and `User.conversations`.
 
+## Message token counts
+
+Revision `20261008_0005` adds nullable integer columns `messages.prompt_tokens`
+and `messages.completion_tokens`. Existing rows keep their data and get `NULL`
+counts. Assistant messages store counts from Gemini usage data. User messages
+and unknown counts keep `NULL` values. Conversation usage totals treat `NULL`
+as zero and exclude title requests.
+
+Run `alembic upgrade head` from `backend/` to apply the change. Run
+`alembic downgrade 20261008_0004` to remove the token columns. The downgrade
+retains messages but removes their token counts.
+
 ## Relationship indexes
 
 `ix_conversations_user_id` indexes conversation ownership. The message-index
