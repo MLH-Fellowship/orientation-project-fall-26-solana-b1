@@ -128,7 +128,7 @@ def test_existing_invalid_references_block_migrations_without_cleanup(
             assert connection.exec_driver_sql(f"SELECT COUNT(*) FROM {invalid_table}").scalar() == 1
             assert (
                 connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-                == "20261005_0003"
+                == "20261008_0004"
             )
         assert "users" in inspect(engine).get_table_names()
     finally:
@@ -145,7 +145,7 @@ def test_post_migration_integrity_failure_rolls_back_schema_and_data(tmp_path):
 from alembic import op
 import sqlalchemy as sa
 revision = "test_invalid"
-down_revision = "20261005_0003"
+down_revision = "20261008_0004"
 branch_labels = None
 depends_on = None
 
@@ -166,7 +166,7 @@ def downgrade():
             assert connection.exec_driver_sql("SELECT COUNT(*) FROM conversations").scalar() == 0
             assert (
                 connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-                == "20261005_0003"
+                == "20261008_0004"
             )
             assert connection.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
     finally:

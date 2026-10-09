@@ -75,7 +75,8 @@ interpreter explicitly. For example:
 make backend-install PYTHON=python3.13
 ```
 
-Add your Gemini API key to `backend/.env`, then start the API:
+Set `JWT_SECRET` in `backend/.env` to a random value with at least 32 characters.
+Add your Gemini API key if you need AI replies. Then start the API:
 
 ```bash
 make backend-migrate
@@ -99,7 +100,8 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 cp .env.example .env
-# Add your GEMINI_API_KEY (free tier: https://aistudio.google.com/apikey)
+# Set JWT_SECRET to a random value with at least 32 characters.
+# Add GEMINI_API_KEY for AI replies.
 python -m alembic upgrade head
 python -m uvicorn app.main:app --reload --port 8000
 ```
@@ -191,7 +193,7 @@ Docker Compose builds both development containers, keeps the SQLite database in
 a named volume, and configures the Vite proxy to reach the backend container.
 
 ```bash
-GEMINI_API_KEY=your-key docker compose up --build
+JWT_SECRET=your-random-secret-with-at-least-32-characters docker compose up --build
 ```
 
 Then visit `http://localhost:5173`. The backend API is also available at
@@ -208,11 +210,10 @@ docker compose down
 
 ## What's here vs. what's not
 
-This scaffold gives you: a working conversation + message data model, one
-endpoint to send a message and get an LLM reply, and a minimal React UI
-that can hold a single conversation. It deliberately has **no**
-authentication, streaming, pagination, multi-conversation UI, migrations,
-or production deployment configuration -- those are the fellowship issues.
+This scaffold gives you: account authentication, a working conversation and
+message data model, one endpoint to send a message and get an LLM reply, and a
+minimal React UI that can hold a single conversation. It does not include
+streaming, a multi-conversation UI, or production deployment configuration.
 
 ## Contributing
 
@@ -230,6 +231,9 @@ available at `http://localhost:8000/openapi.json`.
 | Method | Path                               | Purpose                                                                                                                                         |
 | ------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | GET    | `/api/health`                      | Check that the application responds                                                                                                             |
+| POST   | `/api/auth/signup`                 | Create an account from `email` and `password`, then return a success message                                                                      |
+| POST   | `/api/auth/login`                  | Verify `email` and `password`, then return a bearer token                                                                                        |
+| GET    | `/api/auth/me`                     | Return the user for the bearer token in the `Authorization` header                                                                               |
 | POST   | `/api/conversations`               | Create a conversation, e.g. `{"title": "Learning FastAPI"}`                                                                                     |
 | GET    | `/api/conversations`               | List conversations newest first; returns `{ items, total, limit, offset }`. Query params: `limit` (1–100, default 20), `offset` (≥0, default 0) |
 | GET    | `/api/conversations/{id}`          | Read a conversation and its messages                                                                                                            |
