@@ -8,20 +8,29 @@ more providers (OpenAI, local/Ollama, etc.) behind this same interface
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
+from dataclasses import dataclass
+
+
+@dataclass
+class LLMReply:
+    text: str
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
 
 
 class LLMProvider(ABC):
     @abstractmethod
-    def generate_reply(self, history: list[dict[str, str]]) -> str:
+    def generate_reply(self, history: list[dict[str, str]]) -> LLMReply:
         """
         Given conversation history as a list of {"role": ..., "content": ...}
-        dicts, return the assistant's full text reply.
+        dicts, return the assistant's text and token counts.
         """
         raise NotImplementedError
 
     def generate_reply_stream(self, history: list[dict[str, str]]) -> Iterator[str]:
         """Yield assistant response text chunks in generation order."""
-        yield self.generate_reply(history)
+        yield self.generate_reply(history).text
+
     @abstractmethod
     def generate_title(self, user_message: str, assistant_message: str) -> str:
         """

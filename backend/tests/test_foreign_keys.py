@@ -4,6 +4,7 @@ import shutil
 import pytest
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
@@ -112,6 +113,7 @@ def test_existing_invalid_references_block_migrations_without_cleanup(
 ):
     url = f"sqlite:///{tmp_path / 'invalid.db'}"
     config = migration_config(url)
+    head = ScriptDirectory.from_config(config).get_current_head()
     command.upgrade(config, "head")
     engine = create_engine(url)
     try:
@@ -128,7 +130,7 @@ def test_existing_invalid_references_block_migrations_without_cleanup(
             assert connection.exec_driver_sql(f"SELECT COUNT(*) FROM {invalid_table}").scalar() == 1
             assert (
                 connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-                == "20261005_0003"
+                == head
             )
         assert "users" in inspect(engine).get_table_names()
     finally:
@@ -138,14 +140,15 @@ def test_existing_invalid_references_block_migrations_without_cleanup(
 def test_post_migration_integrity_failure_rolls_back_schema_and_data(tmp_path):
     url = f"sqlite:///{tmp_path / 'rollback.db'}"
     config = migration_config(url)
+    head = ScriptDirectory.from_config(config).get_current_head()
     command.upgrade(config, "head")
     migrations = tmp_path / "migrations"
     shutil.copytree(BACKEND_DIR / "migrations", migrations)
-    (migrations / "versions" / "test_invalid.py").write_text("""
+    (migrations / "versions" / "test_invalid.py").write_text(f"""
 from alembic import op
 import sqlalchemy as sa
 revision = "test_invalid"
-down_revision = "20261005_0003"
+down_revision = "{head}"
 branch_labels = None
 depends_on = None
 
@@ -166,7 +169,7 @@ def downgrade():
             assert connection.exec_driver_sql("SELECT COUNT(*) FROM conversations").scalar() == 0
             assert (
                 connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-                == "20261005_0003"
+                == head
             )
             assert connection.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
     finally:

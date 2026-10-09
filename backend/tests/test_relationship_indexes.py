@@ -42,12 +42,18 @@ def test_message_index_upgrade_and_rollback_preserve_data_and_foreign_keys(tmp_p
         assert original.get_indexes("messages") == []
         ownership_indexes = original.get_indexes("conversations")
         foreign_keys = original.get_foreign_keys("messages")
-        with Session(bind) as session:
-            user = User(email="owner@example.com")
-            chat = Conversation(user=user, title="Keep me")
-            session.add(Message(conversation=chat, role="user", content="Keep this message"))
-            session.commit()
-            chat_id = chat.id
+        chat_id = "chat"
+        with bind.begin() as connection:
+            connection.exec_driver_sql(
+                "INSERT INTO users (id, email) VALUES ('owner', 'owner@example.com')"
+            )
+            connection.exec_driver_sql(
+                "INSERT INTO conversations (id, title, user_id) VALUES ('chat', 'Keep me', 'owner')"
+            )
+            connection.exec_driver_sql(
+                "INSERT INTO messages (id, conversation_id, role, content) "
+                "VALUES ('message', 'chat', 'user', 'Keep this message')"
+            )
 
         for action, revision in (
             (command.upgrade, "head"),
@@ -67,12 +73,15 @@ def test_message_index_upgrade_and_rollback_preserve_data_and_foreign_keys(tmp_p
                 assert not indexes[0]["unique"]
             else:
                 assert indexes == []
-            with Session(bind) as session:
-                chat = session.get(Conversation, chat_id)
-                assert chat.title == "Keep me"
-                assert chat.user.email == "owner@example.com"
-                assert [message.content for message in chat.messages] == ["Keep this message"]
             with bind.connect() as connection:
+                row = connection.exec_driver_sql(
+                    "SELECT conversations.title, users.email, messages.content "
+                    "FROM conversations JOIN users ON users.id = conversations.user_id "
+                    "JOIN messages ON messages.conversation_id = conversations.id "
+                    "WHERE conversations.id = ?",
+                    (chat_id,),
+                ).one()
+                assert row == ("Keep me", "owner@example.com", "Keep this message")
                 assert connection.exec_driver_sql("PRAGMA foreign_key_check").all() == []
         assert ownership_indexes[0]["column_names"] == ["user_id"]
         command.check(config)

@@ -1,4 +1,5 @@
 import { CircleAlert, RotateCw } from "lucide-react";
+import Markdown from "./Markdown";
 
 export default function MessageList({ messages, loading, opening, failedTexts, onRetry }) {
   if (opening) {
@@ -16,7 +17,7 @@ export default function MessageList({ messages, loading, opening, failedTexts, o
     <div className="messages">
       {messages.map((m, i) => (
         <div key={m.id ?? i} className={`message ${m.role}`}>
-          {m.content}
+          {m.role === "assistant" ? <Markdown>{m.content}</Markdown> : m.content}
         </div>
       ))}
 

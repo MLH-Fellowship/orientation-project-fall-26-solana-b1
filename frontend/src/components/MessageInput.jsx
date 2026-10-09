@@ -1,8 +1,16 @@
 import { ArrowUp } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 export default function MessageInput({ onSend, disabled, inputRef }) {
   const [text, setText] = useState("");
+
+  // Grow with the content; CSS max-height caps it, after which the textarea scrolls.
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [text, inputRef]);
 
   function handleSubmit() {
     if (!text.trim() || disabled) return;
@@ -11,7 +19,8 @@ export default function MessageInput({ onSend, disabled, inputRef }) {
   }
 
   function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // Shift+Enter inserts a newline; skip Enter while an IME is composing (e.g. Japanese input).
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSubmit();
     }
@@ -21,6 +30,7 @@ export default function MessageInput({ onSend, disabled, inputRef }) {
     <div className="composer">
       <textarea
         ref={inputRef}
+        rows={1}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}

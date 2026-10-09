@@ -15,6 +15,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "MLH LLM Fellowship Project"
     database_url: str = "sqlite:///./app.db"
+    jwt_secret: str = Field(min_length=32)
+    jwt_expire_minutes: int = 30
+    message_rate_limit: str = "5/minute"
+    rate_limit_storage_uri: str = "memory://"
 
     # LLM provider config. Fellows will extend this to support
     # multiple providers behind the abstract interface in app/llm/.

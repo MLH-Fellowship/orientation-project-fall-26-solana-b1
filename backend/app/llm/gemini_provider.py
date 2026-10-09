@@ -10,14 +10,14 @@ from google import genai
 from google.genai import types
 
 from app.config import settings
-from app.llm.base import LLMProvider
+from app.llm.base import LLMProvider, LLMReply
 
 
 class GeminiProvider(LLMProvider):
     def __init__(self) -> None:
         self.client = genai.Client(api_key=settings.gemini_api_key)
 
-    def generate_reply(self, history: list[dict]) -> str:
+    def generate_reply(self, history: list[dict]) -> LLMReply:
         # Gemini uses "model" instead of "assistant" for the assistant role,
         # and expects content as a list of Part objects rather than a plain string.
         contents = [
@@ -37,7 +37,12 @@ class GeminiProvider(LLMProvider):
                 else None
             ),
         )
-        return response.text
+        usage = response.usage_metadata
+        return LLMReply(
+            text=response.text,
+            prompt_tokens=usage.prompt_token_count if usage else None,
+            completion_tokens=usage.candidates_token_count if usage else None,
+        )
 
     def generate_reply_stream(self, history: list[dict]) -> Iterator[str]:
         contents = [
@@ -60,6 +65,7 @@ class GeminiProvider(LLMProvider):
         for chunk in response:
             if chunk.text:
                 yield chunk.text
+
     def generate_title(self, user_message: str, assistant_message: str) -> str:
         prompt = (
             "Generate a short conversation title of 3–6 words based on the exchange below. "
