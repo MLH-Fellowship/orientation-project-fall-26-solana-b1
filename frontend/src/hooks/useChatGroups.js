@@ -49,6 +49,15 @@ export default function useChatGroups() {
     setGroups((g) => Object.fromEntries(Object.entries(g).map(([k, v]) => [k, v === from ? to : v])));
   }
 
+  function remove(id) {
+    setGroups((current) => {
+      if (!current[id]) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  }
+
   function toggle(name) {
     setCollapsed((s) => {
       const next = new Set(s);
@@ -104,6 +113,7 @@ export default function useChatGroups() {
     renaming,
     startRename: setRenaming,
     rename,
+    remove,
     toggle,
     dropTarget,
     draggable,

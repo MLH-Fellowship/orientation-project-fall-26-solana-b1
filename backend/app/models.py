@@ -11,7 +11,7 @@ Conversation ownership is optional, allowing anonymous chats.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -26,6 +26,7 @@ class User(Base):
 
     id = Column(String, primary_key=True, default=_uuid)
     email = Column(String, nullable=False, unique=True)
+    password_hash = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversations = relationship("Conversation", back_populates="user")
@@ -49,10 +50,12 @@ class Message(Base):
 
     id = Column(String, primary_key=True, default=_uuid)
     conversation_id = Column(
-        String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+        String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True
     )
     role = Column(String, nullable=False)  # "user" | "assistant"
     content = Column(Text, nullable=False)
+    prompt_tokens = Column(Integer, nullable=True)
+    completion_tokens = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")

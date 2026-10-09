@@ -13,10 +13,12 @@ def test_create_and_default_title(client):
 
 
 def test_list_conversations(client):
-    assert client.get("/api/conversations").json() == []
+    assert client.get("/api/conversations").json()["items"] == []
     make(client, "a")
     make(client, "b")
-    assert len(client.get("/api/conversations").json()) == 2
+    body = client.get("/api/conversations").json()
+    assert body["total"] == 2
+    assert len(body["items"]) == 2
 
 
 def test_get_conversation_and_404(client):

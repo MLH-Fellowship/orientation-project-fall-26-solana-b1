@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
-import { createConversation, getConversation, listConversations, sendMessage } from "../api/client.js";
+import {
+  createConversation,
+  deleteConversation as deleteConversationRequest,
+  getConversation,
+  listConversations,
+  renameConversation as renameConversationRequest,
+  sendMessage,
+} from "../api/client.js";
 
 function without(set, item) {
   const next = new Set(set);
@@ -9,8 +16,24 @@ function without(set, item) {
 }
 
 function omit(obj, key) {
-  const { [key]: _, ...rest } = obj;
+  const rest = { ...obj };
+  delete rest[key];
   return rest;
+}
+
+async function loadAllConversations() {
+  const pageSize = 100;
+  const items = [];
+  let offset = 0;
+  let total = Infinity;
+  while (offset < total) {
+    const page = await listConversations({ limit: pageSize, offset });
+    items.push(...page.items);
+    total = page.total;
+    if (page.items.length === 0) break;
+    offset += page.items.length;
+  }
+  return items;
 }
 
 export default function useChat() {
@@ -29,9 +52,9 @@ export default function useChat() {
 
   function loadConversations() {
     setListState("loading");
-    listConversations()
-      .then((cs) => {
-        setConversations(cs);
+    loadAllConversations()
+      .then((items) => {
+        setConversations(items);
         setListState("ready");
       })
       .catch(() => setListState("error"));
@@ -62,13 +85,34 @@ export default function useChat() {
     setFailed((f) => omit(f, "new"));
   }
 
+  async function renameConversation(id, title) {
+    const updated = await renameConversationRequest(id, title);
+    setConversations((cs) => cs.map((conversation) => (
+      conversation.id === id ? { ...conversation, ...updated } : conversation
+    )));
+  }
+
+  async function deleteConversation(id) {
+    await deleteConversationRequest(id);
+    setConversations((cs) => cs.filter((conversation) => conversation.id !== id));
+    setPending((s) => without(s, id));
+    setUnread((s) => without(s, id));
+
+    if (activeRef.current === id) {
+      activeRef.current = null;
+      setActiveId(null);
+      setMessages([]);
+    }
+  }
+
   async function send(text) {
     let key = activeId ?? "new";
+    const isNew = key === "new";
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setPending((s) => new Set(s).add(key));
     try {
-      if (key === "new") {
-        const convo = await createConversation(text.slice(0, 60));
+      if (isNew) {
+        const convo = await createConversation();
         setConversations((cs) => [{ ...convo, fresh: true }, ...cs]);
         setPending((s) => without(s, "new").add(convo.id));
         setFailed((f) => (f.new ? { ...omit(f, "new"), [convo.id]: f.new } : f));
@@ -79,6 +123,14 @@ export default function useChat() {
         }
       }
       const reply = await sendMessage(key, text);
+      if (isNew) {
+        try {
+          const full = await getConversation(key);
+          setConversations((cs) => cs.map((c) => (c.id === key ? { ...c, title: full.title } : c)));
+        } catch {
+          // The reply is saved. The row keeps "New Conversation" until the next reload.
+        }
+      }
       if (activeRef.current === key) setMessages((prev) => [...prev, reply]);
       else setUnread((s) => new Set(s).add(key));
     } catch {
@@ -115,6 +167,8 @@ export default function useChat() {
     failedTexts: failed[key] ?? [],
     openConversation,
     startNewChat,
+    renameConversation,
+    deleteConversation,
     send,
     retry,
   };
