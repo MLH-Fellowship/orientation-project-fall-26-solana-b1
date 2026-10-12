@@ -7,7 +7,6 @@ from app.llm.base import LLMProvider, LLMReply
 
 
 class OpenAIProvider(LLMProvider):
-
     def __init__(self) -> None:
         self.client = OpenAI(api_key=settings.openai_api_key)
 
