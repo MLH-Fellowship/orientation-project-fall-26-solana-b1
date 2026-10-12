@@ -22,9 +22,15 @@ class Settings(BaseSettings):
 
     # LLM provider config. Fellows will extend this to support
     # multiple providers behind the abstract interface in app/llm/.
-    llm_provider: str = "gemini"
+    llm_provider: str = "gemini"  # Options: "gemini", "openai"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.8-flash"
+    # system_prompt: str = ""
+
+    # OpenAI Settings (New)
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o"
+
     system_prompt: str = ""
 
     # CORS - the Vite dev server default port
