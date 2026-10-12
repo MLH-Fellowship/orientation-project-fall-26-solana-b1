@@ -43,4 +43,5 @@ class OpenAIProvider(LLMProvider):
         response = self.client.chat.completions.create(
             model=settings.openai_model, messages=messages
         )
-        return response.choices[0].message.content or "New Conversation"
+        content = response.choices[0].message.content
+        return content or "New Conversation"
