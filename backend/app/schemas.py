@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Annotated, Any, Literal
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
 
@@ -44,6 +45,8 @@ class UserOut(BaseModel):
 
 
 class MessageCreate(BaseModel):
+    content: str
+    provider: Optional[str] = "openai"
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [{"content": "Explain how this project stores conversations."}]

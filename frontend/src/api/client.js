@@ -43,6 +43,6 @@ export function deleteConversation(id) {
   return request(`/conversations/${id}`, { method: "DELETE" });
 }
 
-export function sendMessage(conversationId, content) {
-  return post(`/conversations/${conversationId}/messages`, { content });
+export function sendMessage(conversationId, content, provider = "gemini") {
+  return post(`/conversations/${conversationId}/messages`, { content, provider });
 }

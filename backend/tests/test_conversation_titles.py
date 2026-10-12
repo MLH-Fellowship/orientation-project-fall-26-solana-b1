@@ -20,7 +20,7 @@ def create_conversation(client, title=None):
 def send_message(client, conversation_id, content="Hello"):
     resp = client.post(
         f"/api/conversations/{conversation_id}/messages",
-        json={"content": content},
+        json={"content": content, "provider": "gemini"},
     )
     assert resp.status_code == 200
     return resp.json()

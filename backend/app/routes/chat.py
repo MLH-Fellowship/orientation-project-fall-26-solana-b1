@@ -197,7 +197,7 @@ def send_message(
 
     history = [{"role": m.role, "content": m.content} for m in convo.messages]
 
-    llm = get_llm_provider()
+    llm = get_llm_provider(provider=payload.provider)
     reply = llm.generate_reply(history)
 
     assistant_msg = Message(
