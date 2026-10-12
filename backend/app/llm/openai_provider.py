@@ -16,9 +16,7 @@ class OpenAIProvider(LLMProvider):
 
         # Prepend system prompt if configured
         if settings.system_prompt:
-            messages.append(
-                {"role": "system", "content": settings.system_prompt}
-            )
+            messages.append({"role": "system", "content": settings.system_prompt})
 
         # Append incoming user/assistant message history
         for m in history:
