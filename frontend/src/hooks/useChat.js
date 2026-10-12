@@ -105,7 +105,7 @@ export default function useChat() {
     }
   }
 
-  async function send(text) {
+  async function send(text, provider = "gemini") {
     let key = activeId ?? "new";
     const isNew = key === "new";
     setMessages((prev) => [...prev, { role: "user", content: text }]);
@@ -122,7 +122,7 @@ export default function useChat() {
           setActiveId(key);
         }
       }
-      const reply = await sendMessage(key, text);
+      const reply = await sendMessage(key, text, provider);
       if (isNew) {
         try {
           const full = await getConversation(key);
